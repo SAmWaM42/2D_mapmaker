@@ -1,0 +1,15 @@
+{
+    "makefile.makefilePath": "C:\\Users\\samue\\OneDrive\\Documents\\gameV2/Makefile",
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "c:\\Users\\samue\\OneDrive\\Documents\\gameV2",
+            "binaryPath": "c:\\Users\\samue\\OneDrive\\Documents\\gameV2\\main",
+            "binaryArgs": []
+        }
+    ],
+    "files.associations": {
+        "*.embeddedhtml": "html",
+        "tuple": "cpp",
+        "iosfwd": "cpp"
+    }
+}
