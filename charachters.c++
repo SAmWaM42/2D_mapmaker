@@ -237,13 +237,31 @@ public:
 };
 class enemy
 {
-    public:
+public:
 Rectangle position;
 Texture2D design;
 Color look;
 string type;
 enemy(){}
-void pathfind(){}; 
+void pathfind(player p,mod_cam cam,mapset set)
+{
+    Vector2 velocity;
+    int distance_x=position.x-p.size.x;
+    if(distance_x>0)
+    {
+
+    }
+    else
+    {
+        
+    }
+    for(int i=0;i<set.tiles.size();i++)
+    {
+        bool standing=CheckCollisionRecs(set.tiles[i].placement,position);
+        
+    }
+
+}; 
 
 };
 
