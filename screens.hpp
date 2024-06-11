@@ -35,17 +35,18 @@ public:
         textures["grass"][6] = LoadTexture("assets/grass/grass6.png");
         textures["grass"][7] = LoadTexture("assets/grass/grass7.png");
         textures["grass"][8] = LoadTexture("assets/grass/grass5.png");
-        textures["sand"][0] = LoadTexture("assets/stone/stone3.png");
-        textures["sand"][1] = LoadTexture("assets/stone/stone1.png");
-        textures["sand"][2] = LoadTexture("assets/stone/stone4.png");
-        textures["sand"][3] = LoadTexture("assets/stone/stone8.png");
-        textures["sand"][4] = LoadTexture("assets/stone/stone2.png");
-        textures["sand"][5] = LoadTexture("assets/stone/stone9.png");
-        textures["sand"][6] = LoadTexture("assets/stone/stone7.png");
-        textures["sand"][7] = LoadTexture("assets/stone/stone5.png");
-        textures["sand"][8] = LoadTexture("assets/stone/stone6.png");
+        textures["stone"][0] = LoadTexture("assets/stone/stone3.png");
+        textures["stone"][1] = LoadTexture("assets/stone/stone1.png");
+        textures["stone"][2] = LoadTexture("assets/stone/stone4.png");
+        textures["stone"][3] = LoadTexture("assets/stone/stone8.png");
+        textures["stone"][4] = LoadTexture("assets/stone/stone2.png");
+        textures["stone"][5] = LoadTexture("assets/stone/stone9.png");
+        textures["stone"][6] = LoadTexture("assets/stone/stone7.png");
+        textures["stone"][7] = LoadTexture("assets/stone/stone5.png");
+        textures["stone"][8] = LoadTexture("assets/stone/stone6.png");
         textures["tree"][0] = LoadTexture("assets/trees/mytree.png");
         textures["particles"][0] = LoadTexture("assets/particles/leaf.png");
+        textures["mob"][0]=LoadTexture("assets/mob/slime.png");
         set.load_map(textures, on_map);
         play = player;
 

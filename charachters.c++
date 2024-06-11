@@ -242,19 +242,47 @@ Rectangle position;
 Texture2D design;
 Color look;
 string type;
-enemy(){}
+int off_position;
+int state;
+enemy(Rectangle position,Texture2D design)
+{
+    off_position=position.x;
+}
 void pathfind(player p,mod_cam cam,mapset set)
 {
     Vector2 velocity;
     int distance_x=position.x-p.size.x;
-    if(distance_x>0)
+    if(distance_x>=200)
+ {   if(distance_x>0)
     {
-
+      velocity.x=1;
+      position.x+=velocity.x;
     }
     else
     {
+         velocity.x=-1;
+      position.x+=velocity.x;
         
     }
+ }
+ else
+ {
+    if(position.x<off_position+100)
+    {
+        position.x++;
+    }
+      if(position.x=off_position+100)
+    {
+       off_position=position.x;
+    }
+    if(position.x<off_position+100)
+    {
+        position.x--;
+    }
+
+    
+
+ }
     for(int i=0;i<set.tiles.size();i++)
     {
         bool standing=CheckCollisionRecs(set.tiles[i].placement,position);
