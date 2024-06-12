@@ -241,12 +241,18 @@ public:
 Rectangle position;
 Texture2D design;
 Color look;
-string type;
+std::string type;
 int off_position;
 int state;
 enemy(Rectangle position,Texture2D design)
 {
+    this->position=position;
+    this->design=design;
     off_position=position.x;
+}
+enemy()
+{
+    
 }
 void pathfind(player p,mod_cam cam,mapset set)
 {

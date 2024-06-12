@@ -8,8 +8,9 @@
 #include <iostream>
 #include <map>
 #include "json.hpp"
-
+#include "charachters.c++"
 using namespace std;
+
 #define max_tiles 1000
 #define tile_size 40
 #define screenheight 720
@@ -31,6 +32,12 @@ public:
         used = false;
     }
 };
+class enemy_store
+{
+    public:
+    Rectangle position;
+    Texture2D look
+};
 
 class mapset
 {
@@ -39,6 +46,7 @@ public:
     map<int, tile> tiles;
     int tilenumber = 0;
     map<int, tile> copy_tiles;
+    map<int,enemy_store> enemies;
 
     void load_map(map<string, map<int, Texture2D>> textures, string name)
     {
@@ -73,11 +81,14 @@ public:
             }
             else
             {
-                enemy new_en(Rectangle{map_data[to_string(i)][2][0],
+                Rectangle pos=Rectangle{map_data[to_string(i)][2][0],
                                        map_data[to_string(i)][2][1],
                                        map_data[to_string(i)][2][2], 
-                                       map_data[to_string(i)][2][3]},
-                             textures[map_data[to_string(i)][0]][map_data[to_string(i)][1]]);
+                                       map_data[to_string(i)][2][3]};
+                                    enemies[i];
+                       enemies[i].position=pos;
+                      enemies[i].design=textures[map_data[to_string(i)][0]][map_data[to_string(i)][1]];
+                
             }
         }
     }
@@ -220,6 +231,10 @@ public:
             {
                 DrawTexture(tiles[i].look, tiles[i].placement.x, tiles[i].placement.y, RAYWHITE);
             }
+        }
+        for(int i=0;i<enemies.size();i++)
+        {
+            DrawTexture(enemies[i].design,enemies[i].position.x,enemies[i].position.y,WHITE);
         }
     }
     void edit_map(string file_name, map<string, map<int, Texture2D>> textures)
