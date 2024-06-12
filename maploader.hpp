@@ -88,7 +88,7 @@ public:
         cin >> name;
         fstream maps;
         fstream all_map;
-        maps.open("../assets/maps/" + name, ios::out);
+        maps.open("../assets/maps/" + name+".json", ios::out);
         all_map.open("../assets/maps/maps.txt", ios::out);
 
         if (!maps)
@@ -212,6 +212,7 @@ public:
             {
                 DrawTexture(tiles[i].look, tiles[i].placement.x, tiles[i].placement.y, RAYWHITE);
             }
+        
         }
         for (int i = 0; i < tilenumber; i++)
         {
