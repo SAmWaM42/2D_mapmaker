@@ -19,6 +19,7 @@ class game_screen
 public:
     player play;
     mapset set;
+    enemy_spawner spawner;
     map<string, map<int, Texture2D>> textures;
     int counter = 0;
     map<int, particles> leaves;
@@ -49,6 +50,7 @@ public:
         textures["mob"][0]=LoadTexture("assets/mob/slime.png");
         set.load_map(textures, on_map);
         play = player;
+        spawner.set(set.enemies);
 
         set_leaves();
         *state = 1;
@@ -109,6 +111,7 @@ public:
         play.moveplayer(set);
         set.drawmap();
         update_leaves();
+        spawner.spawn(play,set);
         play.drawplayer();
     }
     void pause_screen(int *state)

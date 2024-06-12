@@ -4,28 +4,23 @@
 #include "maploader.hpp"
 class items
 {
-   public:
-   int number; 
+public:
+    int number;
 };
 class inventory
-{  
-    public:
-    map<string,items> stored_items;
-    int max_slots;
-    void open_chest(){};
-
-    
-
-};
-class chest:inventory
 {
- public:
- chest()
- {
-    max_slots=10;
- }
-
- 
+public:
+    map<string, items> stored_items;
+    int max_slots;
+    void open_chest() {};
+};
+class chest : inventory
+{
+public:
+    chest()
+    {
+        max_slots = 10;
+    }
 };
 class player
 {
@@ -37,7 +32,7 @@ public:
     Vector2 direct = {0, 0};
     int speed = 2;
     bool isjumping = false;
-    int inventory_number=0;
+    int inventory_number = 0;
 
     player(float x, float y, float width, float height, Color look)
     {
@@ -51,7 +46,6 @@ public:
     }
     player()
     {
-
     }
 
     void moveplayer(mapset set)
@@ -73,9 +67,9 @@ public:
         }
         for (int i = 0; i < max_tiles; i++)
         {
-            if (set.tiles[i].used && (set.tiles[i].type=="grass"||set.tiles[i].type=="stone"))
+            if (set.tiles[i].used && (set.tiles[i].type == "grass" || set.tiles[i].type == "stone"))
             {
-            
+
                 bool collide = CheckCollisionRecs(set.tiles[i].placement, size);
                 if (collide)
                 {
@@ -107,10 +101,9 @@ public:
         for (int i = 0; i < max_tiles; i++)
         {
 
-            if (set.tiles[i].used && (set.tiles[i].type=="grass"||set.tiles[i].type=="stone"))
+            if (set.tiles[i].used && (set.tiles[i].type == "grass" || set.tiles[i].type == "stone"))
             {
                 bool collide = CheckCollisionRecs(set.tiles[i].placement, size);
-             
 
                 if (collide)
                 {
@@ -135,17 +128,15 @@ public:
     {
         DrawRectangleRec(size, look);
     }
-    
+
     void useitem()
     {
-     if(inventory[inventory_number]=="medkit")
-     {
-        look=PURPLE;
-        inventory[inventory_number]="";
-     }
+        if (inventory[inventory_number] == "medkit")
+        {
+            look = PURPLE;
+            inventory[inventory_number] = "";
+        }
     }
-    
-
 };
 class mod_cam
 {
@@ -153,8 +144,8 @@ class mod_cam
 public:
     Camera2D camera;
     Vector2 direct;
-    int direct_x=0;
-    int direct_y=0;
+    int direct_x = 0;
+    int direct_y = 0;
     mod_cam(Vector2 target, Vector2 offset, int zoom, int rotation)
     {
         camera.target = target;
@@ -163,7 +154,8 @@ public:
         camera.zoom = zoom;
     }
     mod_cam()
-    {}
+    {
+    }
 
     void update_position(player player)
     {
@@ -186,118 +178,122 @@ public:
         }
         if (distance_y > 100 || distance_y < -100)
         {
-        
-            if(distance_y>0 )
-           {  
-             camera.target.y +=  player.direct.y;
-                  
+
+            if (distance_y > 0)
+            {
+                camera.target.y += player.direct.y;
             }
             else
             {
 
-                 camera.target.y-=2;
+                camera.target.y -= 2;
             }
-
-            
         }
     }
 
- void move_cam()
- {  
+    void move_cam()
+    {
 
-    
-      if (IsKeyDown(KEY_A))
+        if (IsKeyDown(KEY_A))
         {
-              direct_x=-1;
-           camera.target.x-=1;
-             
-
+            direct_x = -1;
+            camera.target.x -= 1;
         }
         else if (IsKeyDown(KEY_D))
         {
-            direct_x=1;
-           camera.target.x+=1;
-        
+            direct_x = 1;
+            camera.target.x += 1;
         }
-         if (IsKeyDown(KEY_S))
+        if (IsKeyDown(KEY_S))
         {
-            direct_y=1;
-          camera.target.y+=1;
-        
+            direct_y = 1;
+            camera.target.y += 1;
         }
         else if (IsKeyDown(KEY_W))
         {
-            direct_y=-1;
-           camera.target.y-=1;
-          
+            direct_y = -1;
+            camera.target.y -= 1;
         }
-        
- }
-
+    }
 };
 class enemy
 {
 public:
-Rectangle position;
-Texture2D design;
-Color look;
-std::string type;
-int off_position;
-int state;
-enemy(Rectangle position,Texture2D design)
-{
-    this->position=position;
-    this->design=design;
-    off_position=position.x;
-}
-enemy()
-{
-    
-}
-void pathfind(player p,mod_cam cam,mapset set)
-{
-    Vector2 velocity;
-    int distance_x=position.x-p.size.x;
-    if(distance_x>=200)
- {   if(distance_x>0)
+    Rectangle position;
+    Texture2D design;
+    Color look;
+    std::string type;
+    int off_position;
+    int state;
+    enemy(Rectangle position, Texture2D design)
     {
-      velocity.x=1;
-      position.x+=velocity.x;
+        this->position = position;
+        this->design = design;
+        off_position = position.x;
     }
-    else
+    enemy()
     {
-         velocity.x=-1;
-      position.x+=velocity.x;
-        
     }
- }
- else
- {
-    if(position.x<off_position+100)
+    void pathfind(player p,mapset set)
     {
-        position.x++;
-    }
-      if(position.x=off_position+100)
-    {
-       off_position=position.x;
-    }
-    if(position.x<off_position+100)
-    {
-        position.x--;
-    }
-
-    
-
- }
-    for(int i=0;i<set.tiles.size();i++)
-    {
-        bool standing=CheckCollisionRecs(set.tiles[i].placement,position);
-        
-    }
-
-}; 
-
+        Vector2 velocity;
+        int distance_x = position.x - p.size.x;
+        if (distance_x >= 200 && distance_x<= -200)
+        {
+            if (distance_x > 0)
+            {
+                velocity.x = 1;
+                position.x += velocity.x;
+            }
+            else 
+            {
+                velocity.x = -1;
+                position.x += velocity.x;
+            }
+        }
+        else
+        {
+            if (position.x < off_position + 50)
+            {
+                position.x++;
+            }
+            if (position.x = off_position + 50)
+            {
+                off_position = position.x;
+            }
+            if (position.x < off_position + 50)
+            {
+                position.x--;
+            }
+        }
+        for (int i = 0; i < set.tiles.size(); i++)
+        {
+            bool standing = CheckCollisionRecs(set.tiles[i].placement, position);
+        }
+    };
 };
+class enemy_spawner
+{
+    map<int, enemy> enemies;
 
+public:
+    void set(map<int, enemy_store> store)
+    {
+        for (int i = 0; i < store.size(); i++)
+        {
+            enemies[i].position = store[i].position;
+            enemies[i].design = store[i].design;
+            enemies[i].off_position = enemies[i].position.x;
+        }
+    }
+    void spawn(player p,mapset set)
+    {
+        for (int i = 0; i < enemies.size(); i++)
+        {
+            enemies[i].pathfind(p,set);
+            DrawTexture(enemies[i].design, enemies[i].position.x, enemies[i].position.y, RAYWHITE);
+        }
+    }
+};
 
 #endif

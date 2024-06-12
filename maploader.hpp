@@ -8,7 +8,6 @@
 #include <iostream>
 #include <map>
 #include "json.hpp"
-#include "charachters.c++"
 using namespace std;
 
 #define max_tiles 1000
@@ -36,8 +35,10 @@ class enemy_store
 {
     public:
     Rectangle position;
-    Texture2D look
+    Texture2D design;
+    
 };
+   
 
 class mapset
 {
@@ -232,10 +233,7 @@ public:
                 DrawTexture(tiles[i].look, tiles[i].placement.x, tiles[i].placement.y, RAYWHITE);
             }
         }
-        for(int i=0;i<enemies.size();i++)
-        {
-            DrawTexture(enemies[i].design,enemies[i].position.x,enemies[i].position.y,WHITE);
-        }
+      
     }
     void edit_map(string file_name, map<string, map<int, Texture2D>> textures)
     {
