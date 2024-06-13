@@ -10,6 +10,7 @@
     "files.associations": {
         "*.embeddedhtml": "html",
         "tuple": "cpp",
-        "iosfwd": "cpp"
+        "iosfwd": "cpp",
+        "iostream": "cpp"
     }
 }

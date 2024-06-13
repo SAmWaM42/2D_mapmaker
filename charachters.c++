@@ -224,48 +224,69 @@ public:
     Color look;
     std::string type;
     int off_position;
-    int state;
+    int state=0;
     enemy(Rectangle position, Texture2D design)
     {
         this->position = position;
         this->design = design;
         off_position = position.x;
+      
     }
     enemy()
     {
     }
     void pathfind(player p,mapset set)
-    {
+    {    
         Vector2 velocity;
-        int distance_x = position.x - p.size.x;
-        if (distance_x >= 200 && distance_x<= -200)
+        int distance_x = p.size.x-position.x;
+        if(state==0)
+      { 
+
+        if (distance_x <= 400 && distance_x>= -400)
         {
             if (distance_x > 0)
             {
-                velocity.x = 1;
-                position.x += velocity.x;
+                velocity.x = 1;  
             }
-            else 
+            else if(distance_x < 0)
             {
-                velocity.x = -1;
-                position.x += velocity.x;
+                velocity.x = -1; 
             }
+            else
+            {
+                velocity.x=0;
+            }
+              position.x += velocity.x;
         }
         else
-        {
-            if (position.x < off_position + 50)
-            {
-                position.x++;
-            }
-            if (position.x = off_position + 50)
-            {
-                off_position = position.x;
-            }
-            if (position.x < off_position + 50)
-            {
-                position.x--;
-            }
+        {  
+        state=1;
+        off_position=position.x;
         }
+
+      }
+        if(state==1)
+        {
+      //the off_position setting isn't working;
+           if(position.x>=off_position+100)
+           {
+            position.x--;
+           }
+           if( position.x<=off_position-100)
+           {
+           position.x++;
+           }
+        
+          
+          
+
+        }
+        
+         if(distance_x <= 400 && distance_x>= -400)
+           {
+            state=0;
+           }
+        
         for (int i = 0; i < set.tiles.size(); i++)
         {
             bool standing = CheckCollisionRecs(set.tiles[i].placement, position);
@@ -291,7 +312,8 @@ public:
         for (int i = 0; i < enemies.size(); i++)
         {
             enemies[i].pathfind(p,set);
-            DrawTexture(enemies[i].design, enemies[i].position.x, enemies[i].position.y, RAYWHITE);
+            DrawTexture(enemies[i].design, enemies[i].position.x, enemies[i].position.y, RAYWHITE); 
+           
         }
     }
 };
