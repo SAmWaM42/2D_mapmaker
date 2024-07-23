@@ -16,8 +16,9 @@ int main()
    int inner_windowstate = 0;
    player player(screenwidth / 2, screenheight / 2 - 500, 15, 30, RED);
    bool loaded = false;
-   int zoom = 1;
+   float zoom = 1.4;
    int rotation = 0;
+   float sizemodifier=1.5;
    Vector2 offset = {screenwidth / 2, screenheight / 2};
    Vector2 target = {screenwidth / 2, screenheight / 2 - 200};
    mod_cam camera(target, offset, zoom, rotation);

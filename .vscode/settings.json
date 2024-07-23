@@ -5,6 +5,11 @@
             "cwd": "c:\\Users\\samue\\OneDrive\\Documents\\gameV2",
             "binaryPath": "c:\\Users\\samue\\OneDrive\\Documents\\gameV2\\main",
             "binaryArgs": []
+        },
+        {
+            "cwd": "c:\\Users\\samue\\OneDrive\\Documents\\gameV2\\Indigo2",
+            "binaryPath": "c:\\Users\\samue\\OneDrive\\Documents\\gameV2\\Indigo2\\main",
+            "binaryArgs": []
         }
     ],
     "files.associations": {

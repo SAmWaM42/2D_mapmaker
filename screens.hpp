@@ -55,6 +55,7 @@ public:
         set_leaves();
         *state = 1;
     }
+    
     void set_leaves()
     {
         set.extract("tree", 0, true);
@@ -108,8 +109,10 @@ public:
     void run_game()
     {
 
+        
+    
+        set.drawmap(); 
         play.moveplayer(set);
-        set.drawmap();
         update_leaves();
         spawner.spawn(play,set);
         play.drawplayer();

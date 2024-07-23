@@ -80,12 +80,12 @@ public:
                 tiles[i].used = true;
                 tiles[i].look = textures[tiles[i].type][tiles[i].variant];
             }
-            else
+            else if(map_data[to_string(i)][0] == "mob")
             {
                 Rectangle pos=Rectangle{map_data[to_string(i)][2][0],
                                        map_data[to_string(i)][2][1],
-                                       map_data[to_string(i)][2][2], 
-                                       map_data[to_string(i)][2][3]};
+                                       map_data[to_string(i)][2][3], 
+                                       map_data[to_string(i)][2][2]};
                                     enemies[i];
                        enemies[i].position=pos;
                       enemies[i].design=textures[map_data[to_string(i)][0]][map_data[to_string(i)][1]];

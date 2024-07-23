@@ -146,7 +146,7 @@ public:
     Vector2 direct;
     int direct_x = 0;
     int direct_y = 0;
-    mod_cam(Vector2 target, Vector2 offset, int zoom, int rotation)
+    mod_cam(Vector2 target, Vector2 offset, float zoom, int rotation)
     {
         camera.target = target;
         camera.offset = offset;
@@ -225,6 +225,8 @@ public:
     std::string type;
     int off_position;
     int state=0;
+     bool delay=false;
+    int  delay_counter=0;
     enemy(Rectangle position, Texture2D design)
     {
         this->position = position;
@@ -235,15 +237,19 @@ public:
     enemy()
     {
     }
+
     void pathfind(player p,mapset set)
     {    
         Vector2 velocity;
         int distance_x = p.size.x-position.x;
-        if(state==0)
-      { 
+        int distance_y=p.size.y-position.y;
+    
+       if ((distance_x <= 300 && distance_x>= -300)&&(distance_y <= 300 && distance_y>= -300))
+       {
 
-        if (distance_x <= 400 && distance_x>= -400)
+       if( (distance_x <= 200 && distance_x>= -200)&&(distance_y <= 120 && distance_y>= -120))
         {
+            
             if (distance_x > 0)
             {
                 velocity.x = 1;  
@@ -257,41 +263,96 @@ public:
                 velocity.x=0;
             }
               position.x += velocity.x;
-        }
-        else
-        {  
-        state=1;
-        off_position=position.x;
+            
+      
         }
 
-      }
-        if(state==1)
-        {
-      //the off_position setting isn't working;
-           if(position.x>=off_position+100)
-           {
-            position.x--;
-           }
-           if( position.x<=off_position-100)
-           {
-           position.x++;
-           }
+
         
+      for (int i = 0; i < set.tiles.size(); i++)
+    {
+        if(set.tiles[i].placement.x<=position.x+60&&set.tiles[i].placement.x>=position.x-60&&set.tiles[i].placement.y<=position.y+60&&set.tiles[i].placement.y>=position.y-60)
+         {   
+            if (set.tiles[i].used && (set.tiles[i].type == "grass" || set.tiles[i].type == "stone"))
+            {
+
+                bool collide = CheckCollisionRecs(set.tiles[i].placement, position);
+                if (collide)
+                {
+                
+                    if (velocity.x > 0)
+                    {
+                        position.x = set.tiles[i].placement.x - position.width;
+                    }
+                    else
+                    {
+                        position.x = set.tiles[i].placement.x + set.tiles[i].placement.width;
+                    }
+                }
+            }
+         }
+    }
+        
+
+        
+        
+         velocity.y+=1;
+        if(velocity.y>=5)
+        {
+            velocity.y=5;
+        }
+      
+       position.y+=velocity.y;
           
-          
+         for (int i = 0; i < set.tiles.size(); i++)
+        {
+         if(set.tiles[i].placement.x<=position.x+60&&set.tiles[i].placement.x>=position.x-60&&set.tiles[i].placement.y<=position.y+60&&set.tiles[i].placement.y>=position.y-60)
+         {  
+            if (set.tiles[i].used && (set.tiles[i].type == "grass" || set.tiles[i].type == "stone") )
+            {
+
+                bool collide = CheckCollisionRecs(set.tiles[i].placement, position);
+                if (collide)
+                {
+                
+                    position.y=set.tiles[i].placement.y-position.height;
+                
+                }
+            }
+        
 
         }
         
-         if(distance_x <= 400 && distance_x>= -400)
-           {
-            state=0;
-           }
+
+
         
-        for (int i = 0; i < set.tiles.size(); i++)
-        {
-            bool standing = CheckCollisionRecs(set.tiles[i].placement, position);
-        }
-    };
+        
+       }}
+         if(delay=true)
+         {
+            delay_counter++;
+           
+         }
+
+         if(delay_counter>=100)
+         {
+            delay=false;
+            delay_counter=0;
+    
+               
+         }
+       
+
+    } 
+ void attack(player p)
+       {
+        bool collide = CheckCollisionRecs(p.size, position);
+          if(collide)
+          {
+              delay=true;
+              
+          }
+       }
 };
 class enemy_spawner
 {
@@ -312,8 +373,9 @@ public:
         for (int i = 0; i < enemies.size(); i++)
         {
             enemies[i].pathfind(p,set);
-            DrawTexture(enemies[i].design, enemies[i].position.x, enemies[i].position.y, RAYWHITE); 
-           
+            enemies[i].attack(p);
+            DrawTexture(enemies[i].design, enemies[i].position.x, enemies[i].position.y,RAYWHITE); 
+            //(enemies[i].position,BLACK);
         }
     }
 };
