@@ -2,8 +2,7 @@
 #define mapmaker
 #include "../raylib.h"
 
-#include "../maploader.hpp"
-#include "../charachters.c++"
+#include "../root_classes.c++"
 #include "../json.hpp"
 #include <iostream>
 #include <map>
@@ -61,6 +60,7 @@ public:
         textures["stone"][8] = LoadTexture("../assets/stone/stone6.png");
         textures["tree"][0] = LoadTexture("../assets/trees/mytree.png");
         textures["mob"][0]=LoadTexture("../assets/mob/slime.png");
+        textures["weapon"][0]=LoadTexture("../assets/weapons/sword1.png");
 
         mapset mapset;
         string tile_name[textures.size()];
@@ -68,6 +68,8 @@ public:
         tile_name[1] = "stone";
         tile_name[2] = "tree";
         tile_name[3]="mob";
+          tile_name[4]="weapon";
+
 
 
         Texture2D current_tile_img;
@@ -86,7 +88,7 @@ public:
             current_tile_img = textures[tile_name[current_image]][variant];
 
             mapset.tiles[current_tile].variant = variant;
-            mapset.tiles[current_tile].look = current_tile_img;
+            mapset.tiles[current_tile].texture = current_tile_img;
             mapset.tiles[current_tile].type = tile_name[current_image];
 
             if ((camera.camera.target.x - camera.camera.offset.x) < 0)
@@ -103,15 +105,15 @@ public:
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !mode_shift)
             {
 
-                mapset.tiles[current_tile].placement.width = current_tile_img.width;
-                mapset.tiles[current_tile].placement.height = current_tile_img.height;
+                mapset.tiles[current_tile].position.width = current_tile_img.width;
+                mapset.tiles[current_tile].position.height = current_tile_img.height;
                 mapset.tiles[current_tile].used = true;
                 mapset.tiles[current_tile].ongrid = "true";
                 int x = (int)(GetScreenToWorld2D(GetMousePosition(), camera.camera).x / 40);
                 int y = (int)(GetScreenToWorld2D(GetMousePosition(), camera.camera).y / 40);
 
-                mapset.tiles[current_tile].placement.x = grid[x][y].y;
-                mapset.tiles[current_tile].placement.y = grid[x][y].x + 40 - mapset.tiles[current_tile].placement.height;
+                mapset.tiles[current_tile].position.x = grid[x][y].y;
+                mapset.tiles[current_tile].position.y = grid[x][y].x + 40 - mapset.tiles[current_tile].position.height;
                 if (current_tile > 0)
                 {
                     for (int i = 0; i < mapset.tiles.size(); i++)
@@ -122,12 +124,16 @@ public:
                             {
                                 if (i != j)
                                 {
-                                    bool layered = CheckCollisionRecs(mapset.tiles[i].placement, mapset.tiles[j].placement);
+                                    bool layered = CheckCollisionRecs(mapset.tiles[i].position
+                , mapset.tiles[j].position
+                );
 
                                     if (layered)
                                     {
 
-                                        mapset.tiles[j].placement.x = mapset.tiles[i].placement.x + 40;
+                                        mapset.tiles[j].position
+                    .x = mapset.tiles[i].position
+                    .x + 40;
                                     }
                                 }
                             }
@@ -140,13 +146,13 @@ public:
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && mode_shift)
             {
 
-                mapset.tiles[current_tile].placement.width = current_tile_img.width;
-                mapset.tiles[current_tile].placement.height = current_tile_img.height;
+                mapset.tiles[current_tile].position.width = current_tile_img.width;
+                mapset.tiles[current_tile].position.height = current_tile_img.height;
                 mapset.tiles[current_tile].used = true;
                 mapset.tiles[current_tile].ongrid = "false";
-                mapset.tiles[current_tile].placement.x = GetScreenToWorld2D(GetMousePosition(), camera.camera).x;
+                mapset.tiles[current_tile].position.x = GetScreenToWorld2D(GetMousePosition(), camera.camera).x;
 
-                mapset.tiles[current_tile].placement.y = GetScreenToWorld2D(GetMousePosition(), camera.camera).y;
+                mapset.tiles[current_tile].position.y = GetScreenToWorld2D(GetMousePosition(), camera.camera).y;
                 current_tile = (current_tile += 1);
             }
 
@@ -157,7 +163,8 @@ public:
                     if (mapset.tiles[i].used)
                     {
 
-                        if (CheckCollisionPointRec(GetScreenToWorld2D(GetMousePosition(), camera.camera), mapset.tiles[i].placement))
+                        if (CheckCollisionPointRec(GetScreenToWorld2D(GetMousePosition(), camera.camera), mapset.tiles[i].position
+    ))
                         {
 
                             mapset.tiles.extract(i);
@@ -193,7 +200,7 @@ public:
             }
             if (IsKeyPressed(KEY_X))
             {
-                mapset.autosort(textures);
+                mapset.autosort(textures,mapset.tilenumber);
             }
             if(IsKeyPressed(KEY_R))
             {
@@ -240,7 +247,9 @@ public:
                 {
                     if (mapset.tiles[i].ongrid == "true")
                     {
-                        DrawTexture(mapset.tiles[i].look, mapset.tiles[i].placement.x, mapset.tiles[i].placement.y, RAYWHITE);
+                        DrawTexture(mapset.tiles[i].texture, mapset.tiles[i].position
+    .x, mapset.tiles[i].position
+    .y, RAYWHITE);
                     }
                 }
             }
@@ -250,7 +259,9 @@ public:
                 {
                     if (mapset.tiles[i].ongrid == "false")
                     {
-                        DrawTexture(mapset.tiles[i].look, mapset.tiles[i].placement.x, mapset.tiles[i].placement.y, RAYWHITE);
+                        DrawTexture(mapset.tiles[i].texture, mapset.tiles[i].position
+    .x, mapset.tiles[i].position
+    .y, RAYWHITE);
                     }
                 }
             }
