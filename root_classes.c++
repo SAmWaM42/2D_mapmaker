@@ -1,6 +1,7 @@
 #ifndef root_classes
 #define root_classes
 #include "raylib.h"
+#include <math.h>
 #include "iostream"
 #include <fstream>
 #include <algorithm>
@@ -15,6 +16,7 @@ using namespace std;
 class world_object
 {
 public:
+int durability;
     Vector2 position;
     string name;
 };
@@ -41,14 +43,47 @@ public:
         used = false;
     }
 };
+class Itemtype
+{
+    public:
+    enum type
+    {
+        WEAPON,SPELL
+    };
+   
+};
+
+
+class Item : public world_object
+{
+    public:
+    Itemtype type;
+    int stack_size;
+    Texture2D skin;
+    int range;
+    int knockback;
+    int value_changed;
+    int delay;
+    bool active;
+ 
+    Rectangle  attack(Rectangle position,int facing,map<int,enemy>* enemies )
+    {  
+    
+    }
+    
+    
+};
 class physics_entity : public world_object
 {
 public:
     Vector2 velocity = {0, 0};
     Vector2 dimensions{0, 0};
+    map<int,Item> inventory;
     Texture2D skin;
     int fram_counter;
     int speed;
+    int facing;
+    bool alive;
     void fall()
     {
         velocity.y += 1;
@@ -57,30 +92,193 @@ public:
             velocity.y = 7;
         }
     }
+    void check_standing( map<int, tile> set)
+    {
+        for (int i = 0; i < set.size(); i++)
+            {
+                if (set[i].position.x <= position.x + 60 && set[i].position.x >= position.x - 60 && set[i].position.y <= position.y + 60 && set[i].position.y >= position.y - 60)
+                {
+                    if (set[i].used && (set[i].type == "grass" || set[i].type == "stone"))
+                    {
+                        bool collide = CheckCollisionRecs(set[i].position, Rectangle{position.x, position.y, dimensions.x, dimensions.y});
+
+                        if (collide)
+                        {
+
+                            position.y = set[i].position.y - dimensions.x;
+                        }
+                    }
+                }
+            }
+    }
 };
+ float find_distance(Vector2 p,Vector2 position)
+  {
+     float dist_squared=pow(position.x-p.x,2)+pow(position.x-p.x,2);
+
+     return sqrt(dist_squared);
+
+  }
+    class player : public physics_entity
+{
+    bool isjumping = false;
+    Weapon* equipped_weapon;
+    int delay_timer;
+   
+
+  public:
+
+    player(float x, float y, float width, float height, Texture2D texture)
+    {
+        position = {x, y};
+        dimensions = {width, height};
+       
+        skin = texture;
+        speed=2;
+    }
+    player()
+    {
+        speed=2;
+    }
+    void move_x()
+    {
+        
+        if (IsKeyDown(KEY_A))
+        {
+            velocity.x = -speed;
+            facing=velocity.x;
+            
+        }
+        else if (IsKeyDown(KEY_D))
+        {
+            velocity.x = speed;
+            facing=velocity.x;
+        }
+        else
+        {
+            velocity.x = 0;
+        }
+        position.x += velocity.x;
+
+    }
+    void jump()
+    {
+          if (IsKeyDown(KEY_W) && !isjumping)
+        {
+            velocity.y = -15;
+            position.y += velocity.y;
+            isjumping = true;
+        }
+
+    }
+    void Attack()
+    {
+
+    }
+    void pick_up(map<int,Item> items)
+    {
+        //write logic for picking  up items here
+    }
+
+
+    void command_player(map<int,tile> tiles)
+    {
+
+    
+        move_x();
+        for (int i = 0; i<1000; i++)
+        {
+            if (tiles[i].used && (tiles[i].type == "grass" || tiles[i].type == "stone"))
+            {
+                Rectangle temp = {position.x, position.y, dimensions.x, dimensions.y};
+                bool collide = CheckCollisionRecs(tiles[i].position, temp);
+                if (collide)
+                {
+                    if (velocity.x > 0)
+                    {
+                        position.x = tiles[i].position.x - temp.width;
+                    }
+                    else
+                    {
+                        position.x = tiles[i].position.x + tiles[i].position.width;
+                    }
+                }
+            }
+        }
+        jump();
+        fall();
+        position.y += velocity.y;
+       for (int i = 0; i < 1000; i++)
+        {
+
+            if (tiles[i].used && (tiles[i].type == "grass" || tiles[i].type == "stone"))
+            {
+                Rectangle temp = {position.x, position.y, dimensions.x, dimensions.y};
+                bool collide = CheckCollisionRecs(tiles[i].position, temp);
+
+                if (collide)
+                {
+                    if (velocity.y > 0)
+                    {
+                        position.y = tiles[i].position.y - temp.height;
+                        isjumping = false;
+                    }
+                    else
+                    {
+                        position.y = tiles[i].position.y + tiles[i].position.height;
+                    }
+                }
+            }
+        }
+        if (position.y > 800)
+        {
+            position.y *= -1;
+        }
+        
+      
+
+    if (IsKeyPressed(KEY_SPACE))
+     {
+     }
+    }
+    void drawplayer()
+    {
+        DrawRectangle(position.x, position.y, dimensions.x, dimensions.y, RED);
+    }
+    void act(map<int,tile> tiles)
+    {
+        command_player(tiles);
+        drawplayer();
+    }
+};
+int  pick_up(player *p,Item a)
+{
+    p->inventory[p->inventory.size()+1]=a;
+
+
+    return 0;
+
+}
 
 class enemy : public physics_entity
 {
 public:
-    void pathfind(Rectangle p, map<int, tile> set)
-    {
-        Vector2 velocity;
-        int distance_x = p.x - position.x;
-        int distance_y = p.y - position.y;
+bool idle=true;
+  void active_move(int distance)
+  {
 
-        if ((distance_x <= 300 && distance_x >= -300) && (distance_y <= 300 && distance_y >= -300))
-        {
-
-            if ((distance_x <= 200 && distance_x >= -200) && (distance_y <= 120 && distance_y >= -120))
+     if ((distance <= 200 && distance >= -200))
             {
 
-                if (distance_x > 0)
+                if (distance > 0)
                 {
                     velocity.x = 1;
+                    facing=velocity.x;
                 }
-                else if (distance_x < 0)
+                else if (distance < 0)
                 {
                     velocity.x = -1;
+                    facing=velocity.x;
                 }
                 else
                 {
@@ -88,7 +286,37 @@ public:
                 }
                 position.x += velocity.x;
             }
+            else
+            {
+                idle=true;
+            }
 
+  }
+  void idle_move(map<int, tile> set,int distance)
+  {
+    if ((distance <= 200 && distance >= -200) )
+            {
+             idle=false;
+          }
+
+  
+  }
+ void pathfind(Rectangle p, map<int, tile> set)
+    {
+        Vector2 velocity;
+      double distance=find_distance(Vector2{p.x,p.y},position);
+
+        if ((distance <= 400 && distance>= -400) )
+        {
+              if(idle)
+              {
+                idle_move(set,distance);
+              }
+              else
+              {
+              active_move(distance);
+              
+              }
             for (int i = 0; i < set.size(); i++)
             {
                 if (set[i].position.x <= position.x + 60 && set[i].position.x >= position.x - 60 && set[i].position.y <= position.y + 60 && set[i].position.y >= position.y - 60)
@@ -116,22 +344,7 @@ public:
             fall();
             position.y += velocity.y;
 
-            for (int i = 0; i < set.size(); i++)
-            {
-                if (set[i].position.x <= position.x + 60 && set[i].position.x >= position.x - 60 && set[i].position.y <= position.y + 60 && set[i].position.y >= position.y - 60)
-                {
-                    if (set[i].used && (set[i].type == "grass" || set[i].type == "stone"))
-                    {
-                        bool collide = CheckCollisionRecs(set[i].position, Rectangle{position.x, position.y, dimensions.x, dimensions.y});
-
-                        if (collide)
-                        {
-
-                            position.y = set[i].position.y - dimensions.x;
-                        }
-                    }
-                }
-            }
+            check_standing(set);
         }
     }
     void drawself()
@@ -144,9 +357,9 @@ public:
         drawself();
     }
 };
-class tool : public world_object
-{
-};
+
+
+
 class mod_cam
 {
 
@@ -234,7 +447,7 @@ public:
     map<int, tile> copy_tiles;
     int tilenumber = 0;
     map<int, enemy> actors;
-    map<int, tool> items;
+    map<int, Item> items;
     void loadmap(map<string, map<int, Texture2D>> textures, string name)
     {
         fstream map_file;
@@ -517,112 +730,8 @@ public:
         return j;
     }
 };
-class player : public physics_entity
-{
-    bool isjumping = false;
-    int delay_timer;
-   
 
-public:
 
-    player(float x, float y, float width, float height, Texture2D texture)
-    {
-        position = {x, y};
-        dimensions = {width, height};
-        skin = texture;
-        speed=2;
-    }
-    player()
-    {
-        speed=2;
-    }
-
-    void command_player(mapset set)
-    {
-
-        if (IsKeyDown(KEY_A))
-        {
-            velocity.x = -speed;
-            
-        }
-        else if (IsKeyDown(KEY_D))
-        {
-            velocity.x = speed;
-        }
-        else
-        {
-            velocity.x = 0;
-        }
-        position.x += velocity.x;
-      for (int i = 0; i<1000; i++)
-        {
-            if (set.tiles[i].used && (set.tiles[i].type == "grass" || set.tiles[i].type == "stone"))
-            {
-                Rectangle temp = {position.x, position.y, dimensions.x, dimensions.y};
-                bool collide = CheckCollisionRecs(set.tiles[i].position, temp);
-                if (collide)
-                {
-                    if (velocity.x > 0)
-                    {
-                        position.x = set.tiles[i].position.x - temp.width;
-                    }
-                    else
-                    {
-                        position.x = set.tiles[i].position.x + set.tiles[i].position.width;
-                    }
-                }
-            }
-        }
-
-        if (IsKeyDown(KEY_W) && !isjumping)
-        {
-            velocity.y = -15;
-            position.y += velocity.y;
-            isjumping = true;
-        }
-        fall();
-        position.y += velocity.y;
-       for (int i = 0; i < 1000; i++)
-        {
-
-            if (set.tiles[i].used && (set.tiles[i].type == "grass" || set.tiles[i].type == "stone"))
-            {
-                Rectangle temp = {position.x, position.y, dimensions.x, dimensions.y};
-                bool collide = CheckCollisionRecs(set.tiles[i].position, temp);
-
-                if (collide)
-                {
-                    if (velocity.y > 0)
-                    {
-                        position.y = set.tiles[i].position.y - temp.height;
-                        isjumping = false;
-                    }
-                    else
-                    {
-                        position.y = set.tiles[i].position.y + set.tiles[i].position.height;
-                    }
-                }
-            }
-        }
-        if (position.y > 800)
-        {
-            position.y *= -1;
-        }
-
-        if (IsKeyPressed(KEY_SPACE))
-        {
-        }
-    }
-    void drawplayer()
-    {
-        DrawRectangle(position.x, position.y, dimensions.x, dimensions.y, RED);
-    }
-    void act(mapset set)
-    {
-        command_player(set);
-        drawplayer();
-    }
-};
 class main_menu
 {
 public:
@@ -682,6 +791,7 @@ public:
     }
 };
 
+
 class world
 {
 public:
@@ -690,7 +800,7 @@ public:
     mapset working_mapset;
     map<int, string> map_name;
     map<string, map<int, Texture2D>> textures;
-    map<string, tool> item_list;
+    map<string, Item> item_list;
     mod_cam cam;
     int current_map = 0;
     int world_state = 0;
@@ -831,7 +941,7 @@ public:
     {
         cam.update_position(Player.position, Player.velocity);
 
-        Player.act(working_mapset);
+        Player.act(working_mapset.tiles);
 
         for (int i = 0; i <  working_mapset.actors.size(); i++)
         {

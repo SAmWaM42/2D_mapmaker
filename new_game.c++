@@ -25,7 +25,7 @@ int main()
    player Player;
    Player.position={screenwidth / 2, screenheight / 2};
    Player.dimensions={30,50};
-   float zoom = 1.4;
+   float zoom = 1;
    int rotation = 0;
    Vector2 offset = {screenwidth / 2, screenheight / 2};
    Vector2 target = {screenwidth / 2, screenheight / 2 - 200};
