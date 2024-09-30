@@ -66,12 +66,26 @@ class Item : public world_object
     int delay;
     bool active;
  
-    Rectangle  attack(Rectangle position,int facing,map<int,enemy>* enemies )
+    Rectangle  attack(Rectangle position,int facing )
     {  
     
     }
     
     
+};
+class Weapon : public Item
+{
+
+public:
+    enum variant
+    {
+        RANGED,
+        MELEE
+    };
+    Weapon()
+    {
+        type.WEAPON;
+    }
 };
 class physics_entity : public world_object
 {
@@ -332,9 +346,9 @@ bool idle=true;
                             {
                                 position.x = set[i].position.x - dimensions.x;
                             }
-                            else
+                            else if((velocity.x < 0))
                             {
-                                position.x = set[i].position.x + set[i].position.width;
+                                position.x = set[i].position.x+ set[i].position.width;
                             }
                         }
                     }
