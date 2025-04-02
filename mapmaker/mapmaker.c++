@@ -202,7 +202,7 @@ public:
             if (IsKeyPressed(KEY_X))
             {
                 //primitive tile sorting on placement
-                mapset.autosort(textures, mapset.tilenumber);
+                mapset.autosort(textures,current_tile);
             }
             if (IsKeyPressed(KEY_R))
             {

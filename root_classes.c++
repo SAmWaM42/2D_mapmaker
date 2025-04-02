@@ -306,13 +306,14 @@ public:
     void autosort(map<string, map<int, Texture2D>> textures, int tilenumber)
     {
 
+        
         for (int i = 0; i < tilenumber; i++)
         {
             bool tile_left = false;
             bool tile_right = false;
             bool tile_up = false;
             bool tile_down = false;
-
+           
             if (tiles[i].used)
             {
                 int grid_x = (int)tiles[i].position.x / 40;
