@@ -316,35 +316,39 @@ public:
            
             if (tiles[i].used)
             {
+                //reduce the position of the tile to a grid number
                 int grid_x = (int)tiles[i].position.x / 40;
                 int grid_y = (int)tiles[i].position.y / 40;
 
                 for (int j = 0; j < tilenumber; j++)
                 {
+
                     if (tiles[j].used && i != j)
                     {
+                        //reduce all other tiles to a  grid number  and set a booleann based on whether a tile is present or not
                         int grid_x_compare = (int)tiles[j].position.x / 40;
                         int grid_y_compare = (int)tiles[j].position.y / 40;
 
-                        if (grid_x_compare == grid_x - 1)
+                        if (grid_x_compare == grid_x - 1 && grid_y_compare==grid_y)
                         {
                             tile_left = true;
                         }
-                        if (grid_x_compare == grid_x + 1)
+                        if (grid_x_compare == grid_x + 1 &7 && grid_y_compare==grid_y)
                         {
                             tile_right = true;
                         }
-                        if (grid_y_compare == (grid_y - 1))
+                        if (grid_y_compare == (grid_y - 1) && grid_x_compare==grid_x)
                         {
                             tile_up = true;
                         }
-                        if (grid_y_compare == grid_y + 1)
+                        if (grid_y_compare == grid_y + 1 && grid_x_compare==grid_x)
                         {
                             tile_down = true;
                         }
                     }
                 }
 
+                // behaviour upon finding a tile in the below positions
                 if (tile_up == false && tile_down == true && tile_left == false && tile_right == true)
                 {
                     // left upper tile
@@ -377,16 +381,16 @@ public:
                 }
                 if (tile_up == true && tile_down == false && tile_left == false && tile_right == true)
                 { // bottom left tile
-                    tiles[i].variant = 3;
+                    tiles[i].variant = 6;
                 }
                 if (tile_up == true && tile_down == false && tile_left == true && tile_right == true)
                 {
                     // bottom centre
-                    tiles[i].variant = 4;
+                    tiles[i].variant = 7;
                 }
                 if (tile_up == true && tile_down == false && tile_left == true && tile_right == false)
                 { // bottom right tile
-                    tiles[i].variant = 5;
+                    tiles[i].variant = 8;
                 }
 
                 tiles[i].texture = textures[tiles[i].type][tiles[i].variant];

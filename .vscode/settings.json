@@ -1,5 +1,5 @@
 {
-    "makefile.makefilePath": "C:\\Users\\samue\\OneDrive\\Documents\\gameV2\\Indigo2\\Makefile",
+    "makefile.makefilePath": "C:\\Users\\samue\\OneDrive\\Documents\\gameV2\\Evolve_rpg\\Makefile",
     "makefile.launchConfigurations": [
         {
             "cwd": "c:\\Users\\samue\\OneDrive\\Documents\\gameV2",
@@ -9,6 +9,11 @@
         {
             "cwd": "c:\\Users\\samue\\OneDrive\\Documents\\gameV2\\Indigo2",
             "binaryPath": "c:\\Users\\samue\\OneDrive\\Documents\\gameV2\\Indigo2\\main",
+            "binaryArgs": []
+        },
+        {
+            "cwd": "c:\\Users\\samue\\OneDrive\\Documents\\gameV2\\Evolve_rpg",
+            "binaryPath": "c:\\Users\\samue\\OneDrive\\Documents\\gameV2\\Evolve_rpg\\main",
             "binaryArgs": []
         }
     ],

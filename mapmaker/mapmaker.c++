@@ -13,19 +13,40 @@ using namespace std;
 using json = nlohmann::json;
 
 int grid_tiles = 100;
-int text_length=16;
+int text_length = 16;
+int tile_size=40;
 class tileeditor
 {
 
 public:
-    void prepare_textures( map<string, map<int, Texture2D>> textures)
+map<string, map<int, Texture2D>> prepare_textures(map<string, map<int, Texture2D>> textures, string name,Texture2D set_text)
     {
-        Texture2D grass_text= LoadTexture("../assets/grass/grass.png");
-         for(int i=0;i<(int)grass_text.height/16;i++)
-         {
-            textures["grass"][i] =
-         }
+       
+        Rectangle bounds = {0, 0, text_length,text_length};
+        Image grass_text = LoadImageFromTexture(set_text);
+        int text_num= (grass_text.height/text_length)*(grass_text.height/text_length);
+        for (int i = 0; i <text_num; i++)
+        {
 
+            Image gt_copy=ImageCopy(grass_text);
+            Image *gt_pointer = &gt_copy;
+            ImageCrop(gt_pointer, bounds);
+            ImageResize(gt_pointer,tile_size,tile_size);
+            textures[name][i] = LoadTextureFromImage(gt_copy);
+            bounds.x+=text_length;
+            if (bounds.x >= grass_text.width)
+            {
+                bounds.x = 0;
+                bounds.y+=text_length;
+            }
+            cout<<bounds.x;
+
+           UnloadImage(gt_copy);
+        }
+        UnloadImage(grass_text);
+
+       cout<<text_num;
+        return textures;
     }
     void run_editor()
     {
@@ -50,35 +71,15 @@ public:
 
         InitWindow(screenwidth, screenheight, "indigoV2");
         map<string, map<int, Texture2D>> textures;
-        textures["grass"][0] = LoadTexture("../assets/grass/grass4.png");
-        textures["grass"][1] = LoadTexture("../assets/grass/grass1.png");
-        textures["grass"][2] = LoadTexture("../assets/grass/grass3.png");
-        textures["grass"][3] = LoadTexture("../assets/grass/grass9.png");
-        textures["grass"][4] = LoadTexture("../assets/grass/grass2.png");
-        textures["grass"][5] = LoadTexture("../assets/grass/grass8.png");
-        textures["grass"][6] = LoadTexture("../assets/grass/grass6.png");
-        textures["grass"][7] = LoadTexture("../assets/grass/grass7.png");
-        textures["grass"][8] = LoadTexture("../assets/grass/grass5.png");
-        textures["stone"][0] = LoadTexture("../assets/stone/stone3.png");
-        textures["stone"][1] = LoadTexture("../assets/stone/stone1.png");
-        textures["stone"][2] = LoadTexture("../assets/stone/stone4.png");
-        textures["stone"][3] = LoadTexture("../assets/stone/stone8.png");
-        textures["stone"][4] = LoadTexture("../assets/stone/stone2.png");
-        textures["stone"][5] = LoadTexture("../assets/stone/stone9.png");
-        textures["stone"][6] = LoadTexture("../assets/stone/stone7.png");
-        textures["stone"][7] = LoadTexture("../assets/stone/stone5.png");
-        textures[" stone"][8] = LoadTexture("../assets/stone/stone6.png");
-        textures["tree"][0] = LoadTexture("../assets/trees/mytree.png");
-        textures["mob"][0] = LoadTexture("../assets/mob/slime.png");
-        textures["weapon"][0] = LoadTexture("../assets/weapons/sword1.png");
-
+        Texture2D grass = LoadTexture("../assets/grass/grass.png");
+    
+        textures=prepare_textures(textures,"grass",grass);
         mapset mapset;
         string tile_name[textures.size()];
+    
+        
         tile_name[0] = "grass";
-        tile_name[1] = "stone";
-        tile_name[2] = "tree";
-        tile_name[3] = "mob";
-        tile_name[4] = "weapon";
+        
 
         Texture2D current_tile_img;
         int current_image = 0;
@@ -111,7 +112,7 @@ public:
 
             // fix camera movement and improve block positioning ans assignment
 
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !mode_shift)
+            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !mode_shift)
             {
 
                 mapset.tiles[current_tile].position.width = current_tile_img.width;
@@ -123,6 +124,7 @@ public:
 
                 mapset.tiles[current_tile].position.x = grid[x][y].y;
                 mapset.tiles[current_tile].position.y = grid[x][y].x + 40 - mapset.tiles[current_tile].position.height;
+                bool layered=false;
                 if (current_tile > 0)
                 {
                     for (int i = 0; i < mapset.tiles.size(); i++)
@@ -133,20 +135,27 @@ public:
                             {
                                 if (i != j)
                                 {
-                                    bool layered = CheckCollisionRecs(mapset.tiles[i].position, mapset.tiles[j].position);
+                                     layered = CheckCollisionRecs(mapset.tiles[i].position, mapset.tiles[j].position);
 
                                     if (layered)
                                     {
 
-                                        mapset.tiles[j].position.x = mapset.tiles[i].position.x + 40;
+                                        mapset.tiles.erase(j);
+                                        
                                     }
+                                    
+                                   
                                 }
                             }
                         }
                     }
                 }
+                if(!layered)
+                {
+                    current_tile = (current_tile + 1);
+                }
 
-                current_tile = (current_tile + 1);
+                
             }
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && mode_shift)
             {
@@ -187,18 +196,14 @@ public:
 
             if (IsKeyPressed(KEY_N) && tile_shift)
             {
-                //changing tile type
+                // changing tile type
 
-                current_image = (current_image + 1)%(textures.size()-1);
-
-              
+                current_image = (current_image + 1) % (textures.size() - 1);
             }
             if (IsKeyPressed(KEY_N) && !tile_shift)
             {
-              //changing the variant of that specific tile type
+                // changing the variant of that specific tile type
                 variant = (variant + 1) % textures[tile_name[current_image]].size();
-
-                
             }
             if (IsKeyPressed(KEY_O))
             {
@@ -206,13 +211,13 @@ public:
             }
             if (IsKeyPressed(KEY_G))
             {
-                //the grid to assist in tile placement
+                // the grid to assist in tile placement
                 grid_on = !grid_on;
             }
             if (IsKeyPressed(KEY_X))
             {
-                //primitive tile sorting on placement
-                mapset.autosort(textures,current_tile);
+                // primitive tile sorting on placement
+                mapset.autosort(textures, current_tile);
             }
             if (IsKeyPressed(KEY_R))
             {
