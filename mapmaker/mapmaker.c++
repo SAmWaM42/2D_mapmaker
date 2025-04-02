@@ -57,20 +57,18 @@ public:
         textures["stone"][5] = LoadTexture("../assets/stone/stone9.png");
         textures["stone"][6] = LoadTexture("../assets/stone/stone7.png");
         textures["stone"][7] = LoadTexture("../assets/stone/stone5.png");
-        textures["stone"][8] = LoadTexture("../assets/stone/stone6.png");
+        textures[" stone"][8] = LoadTexture("../assets/stone/stone6.png");
         textures["tree"][0] = LoadTexture("../assets/trees/mytree.png");
-        textures["mob"][0]=LoadTexture("../assets/mob/slime.png");
-        textures["weapon"][0]=LoadTexture("../assets/weapons/sword1.png");
+        textures["mob"][0] = LoadTexture("../assets/mob/slime.png");
+        textures["weapon"][0] = LoadTexture("../assets/weapons/sword1.png");
 
         mapset mapset;
         string tile_name[textures.size()];
         tile_name[0] = "grass";
         tile_name[1] = "stone";
         tile_name[2] = "tree";
-        tile_name[3]="mob";
-          tile_name[4]="weapon";
-
-
+        tile_name[3] = "mob";
+        tile_name[4] = "weapon";
 
         Texture2D current_tile_img;
         int current_image = 0;
@@ -100,6 +98,7 @@ public:
                 camera.camera.target.y += 1;
             }
             camera.move_cam();
+
             // fix camera movement and improve block positioning ans assignment
 
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !mode_shift)
@@ -124,16 +123,12 @@ public:
                             {
                                 if (i != j)
                                 {
-                                    bool layered = CheckCollisionRecs(mapset.tiles[i].position
-                , mapset.tiles[j].position
-                );
+                                    bool layered = CheckCollisionRecs(mapset.tiles[i].position, mapset.tiles[j].position);
 
                                     if (layered)
                                     {
 
-                                        mapset.tiles[j].position
-                    .x = mapset.tiles[i].position
-                    .x + 40;
+                                        mapset.tiles[j].position.x = mapset.tiles[i].position.x + 40;
                                     }
                                 }
                             }
@@ -163,11 +158,10 @@ public:
                     if (mapset.tiles[i].used)
                     {
 
-                        if (CheckCollisionPointRec(GetScreenToWorld2D(GetMousePosition(), camera.camera), mapset.tiles[i].position
-    ))
+                        if (CheckCollisionPointRec(GetScreenToWorld2D(GetMousePosition(), camera.camera), mapset.tiles[i].position))
                         {
 
-                            mapset.tiles.extract(i);
+                            mapset.tiles.erase(i);
                         }
                     }
                 }
@@ -183,12 +177,18 @@ public:
 
             if (IsKeyPressed(KEY_N) && tile_shift)
             {
-                current_image = (current_image + 1) % textures.size();
+                //changing tile type
+
+                current_image = (current_image + 1)%(textures.size()-1);
+
+              
             }
             if (IsKeyPressed(KEY_N) && !tile_shift)
             {
-
+              //changing the variant of that specific tile type
                 variant = (variant + 1) % textures[tile_name[current_image]].size();
+
+                
             }
             if (IsKeyPressed(KEY_O))
             {
@@ -196,34 +196,33 @@ public:
             }
             if (IsKeyPressed(KEY_G))
             {
+                //the grid to assist in tile placement
                 grid_on = !grid_on;
             }
             if (IsKeyPressed(KEY_X))
             {
-                mapset.autosort(textures,mapset.tilenumber);
+                //primitive tile sorting on placement
+                mapset.autosort(textures, mapset.tilenumber);
             }
-            if(IsKeyPressed(KEY_R))
+            if (IsKeyPressed(KEY_R))
             {
-                cout<<"enter file to be removed";
+                cout << "enter file to be removed";
                 string filename;
-                cin>>filename;
-                 string name="../assets/maps/"+filename;
-                 cout<<name;
-                 if(remove(name.c_str())!=0)
-                 {
-                    cout<<"file not deleted";
-                 }
-
-               
+                cin >> filename;
+                string name = "../assets/maps/" + filename;
+                cout << name;
+                if (remove(name.c_str()) != 0)
+                {
+                    cout << "file not deleted";
+                }
             }
             if (IsKeyPressed(KEY_E))
             {
                 string name;
-                cout<<"enter map name";
-                cin>>name;
-                mapset.edit_map(name,textures);
+                cout << "enter map name";
+                cin >> name;
+                mapset.edit_map(name, textures);
             }
-            
 
             BeginDrawing();
             ClearBackground(WHITE);
@@ -247,9 +246,7 @@ public:
                 {
                     if (mapset.tiles[i].ongrid == "true")
                     {
-                        DrawTexture(mapset.tiles[i].texture, mapset.tiles[i].position
-    .x, mapset.tiles[i].position
-    .y, RAYWHITE);
+                        DrawTexture(mapset.tiles[i].texture, mapset.tiles[i].position.x, mapset.tiles[i].position.y, RAYWHITE);
                     }
                 }
             }
@@ -259,9 +256,7 @@ public:
                 {
                     if (mapset.tiles[i].ongrid == "false")
                     {
-                        DrawTexture(mapset.tiles[i].texture, mapset.tiles[i].position
-    .x, mapset.tiles[i].position
-    .y, RAYWHITE);
+                        DrawTexture(mapset.tiles[i].texture, mapset.tiles[i].position.x, mapset.tiles[i].position.y, RAYWHITE);
                     }
                 }
             }

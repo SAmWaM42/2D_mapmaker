@@ -15,4 +15,4 @@ OUT = main  # Name of the output exe file
 build:
 	$(CC)  $(filter-out $(EXCLUDE),$(SRC)) -o $(OUT) $(CFLAGS) $(INCLUDE) $(LIB) $(LDFLAGS)
 make_map:
-	$(CC) mapmaker.c++ -o $(OUT)  $(CFLAGS) $(INCLUDE) $(LIB) $(LDFLAGS)
+	$(CC) mapmaker/mapmaker.c++ -o $(OUT)  $(CFLAGS) $(INCLUDE) $(LIB) $(LDFLAGS)
