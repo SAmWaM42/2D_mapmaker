@@ -13,10 +13,20 @@ using namespace std;
 using json = nlohmann::json;
 
 int grid_tiles = 100;
+int text_length=16;
 class tileeditor
 {
 
 public:
+    void prepare_textures( map<string, map<int, Texture2D>> textures)
+    {
+        Texture2D grass_text= LoadTexture("../assets/grass/grass.png");
+         for(int i=0;i<(int)grass_text.height/16;i++)
+         {
+            textures["grass"][i] =
+         }
+
+    }
     void run_editor()
     {
 
