@@ -16,11 +16,10 @@ using namespace std;
 class world_object
 {
 public:
-int durability;
+    int durability;
     Vector2 position;
     string name;
 };
-
 
 class tile
 {
@@ -39,18 +38,17 @@ public:
 };
 class Itemtype
 {
-    public:
+public:
     enum type
     {
-        WEAPON,SPELL
+        WEAPON,
+        SPELL
     };
-   
 };
-
 
 class Item : public world_object
 {
-    public:
+public:
     Itemtype type;
     int stack_size;
     Texture2D skin;
@@ -59,13 +57,10 @@ class Item : public world_object
     int value_changed;
     int delay;
     bool active;
- 
-    Rectangle  attack(Rectangle position,int facing )
-    {  
-    
+
+    Rectangle attack(Rectangle position, int facing)
+    {
     }
-    
-    
 };
 class Weapon : public Item
 {
@@ -86,46 +81,108 @@ class physics_entity : public world_object
 public:
     Vector2 velocity = {0, 0};
     Vector2 dimensions{0, 0};
-    map<int,Item> inventory;
-    Texture2D skin;
+    Rectangle collider;
+    map<int, Item> inventory;
+    map<string, Texture2D> anim_frames;
+    Texture2D current_frame;
     int fram_counter;
     int speed;
     int facing;
     bool alive;
-    void fall()
-    {
-        velocity.y += 1;
-        if (velocity.y >= 7)
-        {
-            velocity.y = 7;
-        }
-    }
-    void check_standing( map<int, tile> set)
-    {
-       //logic for tile collision here
-    }
 };
- float find_distance(Vector2 p,Vector2 position)
-  {
-     float dist_squared=pow(position.x-p.x,2)+pow(position.x-p.x,2);
+float find_distance(Vector2 p, Vector2 position)
+{
+    float dist_squared = pow(position.x - p.x, 2) + pow(position.x - p.x, 2);
 
-     return sqrt(dist_squared);
+    return sqrt(dist_squared);
+}
 
-  }
-   
 class enemy : public physics_entity
 {
 public:
-bool idle=true;
-  //enemy movement logic here
+    enum state
+    {
+        idle,
+        searching,
+        attacking
+    };
+    enum state current;
+    // enemy movement logic here
+    void act()
+    {
+        switch (current)
+        {
+        case idle:
+            Idle();
+            break;
+        case searching:
+            Search();
+            break;
+        case attacking:
+            Attack();
+            break;
+        }
+    }
+    void Idle()
+    {
+    }
+    void Search()
+    {
+    }
+    void Attack()
+    {
+    }
+    void pathfind()
+    {
+    }
     void drawself()
     {
-        DrawTexture(skin, position.x, position.y, RAYWHITE);
+        DrawTexture(current_frame, position.x, position.y, RAYWHITE);
     }
-   
 };
+class player : public physics_entity
+{
+    void act()
+    {
+        move();
+    }
+    player()
+    {
+        // anim_frames["foward"]= LoadTexture("assets/player/");
+        anim_frames["back"] = LoadTexture("assets/player/back");
+        // anim_frames["left"]= LoadTexture("assets/player/");
+        // anim_frames["right"]= LoadTexture("assets/player/");
+    }
+    void move()
+    {
+        if (IsKeyDown(KEY_S))
+        {
+            velocity.y = -1;
+            current_frame = anim_frames["back"];
+        }
+        else if (IsKeyDown(KEY_W))
+        {
+            velocity.y = 1;
+            current_frame = anim_frames["foward"];
+        }
+        collider.y += velocity.y;
 
+        if (IsKeyDown(KEY_A))
 
+        {
+            velocity.x = -1;
+            current_frame = anim_frames["left"];
+        }
+        else if (IsKeyDown(KEY_D))
+        {
+            velocity.x = 1;
+            current_frame = anim_frames["right"];
+        }
+        collider.x += velocity.x;
+
+        fram_counter = (fram_counter + 1) % 4;
+    }
+};
 
 class mod_cam
 {
@@ -167,7 +224,6 @@ public:
         }
         if (distance_y > 100 || distance_y < -100)
         {
-
 
             if (distance_y > 0)
             {
@@ -215,6 +271,37 @@ public:
     int tilenumber = 0;
     map<int, enemy> actors;
     map<int, Item> items;
+    int text_length = 16;
+    int tile_size = 40;
+    map<string, map<int, Texture2D>> prepare_textures(map<string, map<int, Texture2D>> textures, string name, Texture2D set_text)
+    {
+
+        Rectangle bounds = {0, 0, text_length, text_length};
+        Image grass_text = LoadImageFromTexture(set_text);
+        int text_num = (grass_text.height / text_length) * (grass_text.height / text_length);
+        for (int i = 0; i < text_num; i++)
+        {
+
+            Image gt_copy = ImageCopy(grass_text);
+            Image *gt_pointer = &gt_copy;
+            ImageCrop(gt_pointer, bounds);
+            ImageResize(gt_pointer, tile_size, tile_size);
+            textures[name][i] = LoadTextureFromImage(gt_copy);
+            bounds.x += text_length;
+            if (bounds.x >= grass_text.width)
+            {
+                bounds.x = 0;
+                bounds.y += text_length;
+            }
+            cout << bounds.x;
+
+            UnloadImage(gt_copy);
+        }
+        UnloadImage(grass_text);
+
+        cout << text_num;
+        return textures;
+    }
     void loadmap(map<string, map<int, Texture2D>> textures, string name)
     {
         fstream map_file;
@@ -243,7 +330,7 @@ public:
                 actors[i];
                 temp.position = {pos.x, pos.y};
                 temp.dimensions = {pos.width, pos.height};
-                temp.skin = textures[map_data[to_string(i)][0]][map_data[to_string(i)][1]];
+                temp.current_frame = textures[map_data[to_string(i)][0]][map_data[to_string(i)][1]];
                 actors[i] = temp;
             }
             else if (map_data[to_string(i)][0] == "weapon")
@@ -306,17 +393,16 @@ public:
     void autosort(map<string, map<int, Texture2D>> textures, int tilenumber)
     {
 
-        
         for (int i = 0; i < tilenumber; i++)
         {
             bool tile_left = false;
             bool tile_right = false;
             bool tile_up = false;
             bool tile_down = false;
-           
+
             if (tiles[i].used)
             {
-                //reduce the position of the tile to a grid number
+                // reduce the position of the tile to a grid number
                 int grid_x = (int)tiles[i].position.x / 40;
                 int grid_y = (int)tiles[i].position.y / 40;
 
@@ -325,23 +411,23 @@ public:
 
                     if (tiles[j].used && i != j)
                     {
-                        //reduce all other tiles to a  grid number  and set a booleann based on whether a tile is present or not
+                        // reduce all other tiles to a  grid number  and set a booleann based on whether a tile is present or not
                         int grid_x_compare = (int)tiles[j].position.x / 40;
                         int grid_y_compare = (int)tiles[j].position.y / 40;
 
-                        if (grid_x_compare == grid_x - 1 && grid_y_compare==grid_y)
+                        if (grid_x_compare == grid_x - 1 && grid_y_compare == grid_y)
                         {
                             tile_left = true;
                         }
-                        if (grid_x_compare == grid_x + 1 &7 && grid_y_compare==grid_y)
+                        if (grid_x_compare == grid_x + 1 & 7 && grid_y_compare == grid_y)
                         {
                             tile_right = true;
                         }
-                        if (grid_y_compare == (grid_y - 1) && grid_x_compare==grid_x)
+                        if (grid_y_compare == (grid_y - 1) && grid_x_compare == grid_x)
                         {
                             tile_up = true;
                         }
-                        if (grid_y_compare == grid_y + 1 && grid_x_compare==grid_x)
+                        if (grid_y_compare == grid_y + 1 && grid_x_compare == grid_x)
                         {
                             tile_down = true;
                         }
@@ -503,8 +589,31 @@ public:
     }
 };
 
+class world_manager
+{
+public:
+    mapset set;
+    enum world_state{menu,playing,paused};
+    static world_manager& getInstance()
+    {
+        static world_manager instance;
 
+        return instance;
+    }
+    void manage()
+    {
 
+    }
+    //add behaviour management and someform of renderer 
 
+private:
+    world_manager() {}
+    world_manager(world_manager const &);
+    void operator=(world_manager const &);
+
+public:
+    world_manager(world_manager const &) = delete;
+    void operator=(world_manager const &) = delete;
+};
 
 #endif

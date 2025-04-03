@@ -14,40 +14,11 @@ using json = nlohmann::json;
 
 int grid_tiles = 100;
 int text_length = 16;
-int tile_size=40;
+int tile_size = 40;
 class tileeditor
 {
 
 public:
-map<string, map<int, Texture2D>> prepare_textures(map<string, map<int, Texture2D>> textures, string name,Texture2D set_text)
-    {
-       
-        Rectangle bounds = {0, 0, text_length,text_length};
-        Image grass_text = LoadImageFromTexture(set_text);
-        int text_num= (grass_text.height/text_length)*(grass_text.height/text_length);
-        for (int i = 0; i <text_num; i++)
-        {
-
-            Image gt_copy=ImageCopy(grass_text);
-            Image *gt_pointer = &gt_copy;
-            ImageCrop(gt_pointer, bounds);
-            ImageResize(gt_pointer,tile_size,tile_size);
-            textures[name][i] = LoadTextureFromImage(gt_copy);
-            bounds.x+=text_length;
-            if (bounds.x >= grass_text.width)
-            {
-                bounds.x = 0;
-                bounds.y+=text_length;
-            }
-            cout<<bounds.x;
-
-           UnloadImage(gt_copy);
-        }
-        UnloadImage(grass_text);
-
-       cout<<text_num;
-        return textures;
-    }
     void run_editor()
     {
 
@@ -72,14 +43,10 @@ map<string, map<int, Texture2D>> prepare_textures(map<string, map<int, Texture2D
         InitWindow(screenwidth, screenheight, "indigoV2");
         map<string, map<int, Texture2D>> textures;
         Texture2D grass = LoadTexture("../assets/grass/grass.png");
-    
-        textures=prepare_textures(textures,"grass",grass);
         mapset mapset;
+        textures = mapset.prepare_textures(textures, "grass", grass);
         string tile_name[textures.size()];
-    
-        
         tile_name[0] = "grass";
-        
 
         Texture2D current_tile_img;
         int current_image = 0;
@@ -95,7 +62,6 @@ map<string, map<int, Texture2D>> prepare_textures(map<string, map<int, Texture2D
         {
 
             current_tile_img = textures[tile_name[current_image]][variant];
-
             mapset.tiles[current_tile].variant = variant;
             mapset.tiles[current_tile].texture = current_tile_img;
             mapset.tiles[current_tile].type = tile_name[current_image];
@@ -124,7 +90,8 @@ map<string, map<int, Texture2D>> prepare_textures(map<string, map<int, Texture2D
 
                 mapset.tiles[current_tile].position.x = grid[x][y].y;
                 mapset.tiles[current_tile].position.y = grid[x][y].x + 40 - mapset.tiles[current_tile].position.height;
-                bool layered=false;
+                bool layered = false;
+                bool same_tile=false;
                 if (current_tile > 0)
                 {
                     for (int i = 0; i < mapset.tiles.size(); i++)
@@ -135,27 +102,27 @@ map<string, map<int, Texture2D>> prepare_textures(map<string, map<int, Texture2D
                             {
                                 if (i != j)
                                 {
-                                     layered = CheckCollisionRecs(mapset.tiles[i].position, mapset.tiles[j].position);
+                                    layered = CheckCollisionRecs(mapset.tiles[i].position, mapset.tiles[j].position);
 
                                     if (layered)
                                     {
 
                                         mapset.tiles.erase(j);
-                                        
+                                        same_tile=true;
                                     }
-                                    
-                                   
                                 }
                             }
                         }
                     }
                 }
-                if(!layered)
+                if (!same_tile)
                 {
                     current_tile = (current_tile + 1);
                 }
-
-                
+                else
+                {
+                    same_tile=false;
+                }
             }
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && mode_shift)
             {
