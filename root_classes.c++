@@ -92,21 +92,24 @@ public:
 };
 float find_distance(Vector2 p, Vector2 position)
 {
-    float dist_squared = pow(position.x - p.x, 2) + pow(position.x - p.x, 2);
+    float dist_squared = pow(position.x - p.x, 2) + pow(position.y - p.y, 2);
 
     return sqrt(dist_squared);
 }
 
-class enemy : public physics_entity
+class entity : public physics_entity
 {
 public:
     enum state
     {
         idle,
-        searching,
-        attacking
+        hunting,
+        reproducing,
+        flee
     };
     enum state current;
+    map<int,string> traits;
+    int interest_counter=0;
     // enemy movement logic here
     void act()
     {
@@ -115,65 +118,68 @@ public:
         case idle:
             Idle();
             break;
-        case searching:
-            Search();
+        case hunting:
+            hunt();
             break;
-        case attacking:
-            Attack();
+        case reproducing:
+            reproduce();
             break;
         }
     }
     void Idle()
     {
     }
-    void Search()
+    void hunt(map<int,Rectangle> targets)
+    {
+        
+    }
+    void  reproduce()
     {
     }
-    void Attack()
+    string track(Vector2 position)
     {
+        if(position.x>collider.x)
+        {
+           return "left";
+        }
+        else if(position.x<collider.x)
+        {
+           return "right";
+        }
+        
+        if(position.x>collider.y)
+        {
+            return "down";
+        }
+        else if(position.x<collider.y)
+        {
+            return "up";
+        } 
+
     }
-    void pathfind()
+   
+    
+    void move(string move_direct)
     {
-    }
-    void drawself()
-    {
-        DrawTexture(current_frame, position.x, position.y, RAYWHITE);
-    }
-};
-class player : public physics_entity
-{
-    void act()
-    {
-        move();
-    }
-    player()
-    {
-        // anim_frames["foward"]= LoadTexture("assets/player/");
-        anim_frames["back"] = LoadTexture("assets/player/back");
-        // anim_frames["left"]= LoadTexture("assets/player/");
-        // anim_frames["right"]= LoadTexture("assets/player/");
-    }
-    void move()
-    {
-        if (IsKeyDown(KEY_S))
+        if (move_direct=="down")
         {
             velocity.y = -1;
             current_frame = anim_frames["back"];
         }
-        else if (IsKeyDown(KEY_W))
+        else if (move_direct=="up")
         {
             velocity.y = 1;
             current_frame = anim_frames["foward"];
         }
         collider.y += velocity.y;
 
-        if (IsKeyDown(KEY_A))
+        if (move_direct=="left")
 
         {
             velocity.x = -1;
             current_frame = anim_frames["left"];
         }
-        else if (IsKeyDown(KEY_D))
+        else if (move_direct=="right")
         {
             velocity.x = 1;
             current_frame = anim_frames["right"];
@@ -182,6 +188,22 @@ class player : public physics_entity
 
         fram_counter = (fram_counter + 1) % 4;
     }
+    void drawself()
+    {
+        DrawTexture(current_frame, position.x, position.y, RAYWHITE);
+    }
+};
+class player_controller : public physics_entity
+{
+    void act()
+    {
+       
+    }
+    player_controller()
+    {
+        
+    }
+    
 };
 
 class mod_cam
@@ -269,7 +291,7 @@ public:
     map<int, tile> tiles;
     map<int, tile> copy_tiles;
     int tilenumber = 0;
-    map<int, enemy> actors;
+    map<int, entity> actors;
     map<int, Item> items;
     int text_length = 16;
     int tile_size = 40;
@@ -326,7 +348,7 @@ public:
                                           map_data[to_string(i)][2][1],
                                           map_data[to_string(i)][2][3],
                                           map_data[to_string(i)][2][2]};
-                enemy temp;
+                entity temp;
                 actors[i];
                 temp.position = {pos.x, pos.y};
                 temp.dimensions = {pos.width, pos.height};
@@ -594,6 +616,7 @@ class world_manager
 public:
     mapset set;
     enum world_state{menu,playing,paused};
+    enum world_state current_state;
     static world_manager& getInstance()
     {
         static world_manager instance;
@@ -602,6 +625,15 @@ public:
     }
     void manage()
     {
+        switch(current_state)
+        {
+            case menu:
+            break;
+            case playing:
+            break;
+            case paused:
+            break;
+        }
 
     }
     //add behaviour management and someform of renderer 
