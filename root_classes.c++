@@ -103,23 +103,53 @@ public:
     enum state
     {
         idle,
-        hunting,
+        eating,
         reproducing,
         flee
     };
     enum state current;
     map<int,string> traits;
     int interest_counter=0;
+    bool cannibal=false;
+    float hunger=0;
+    
+    entity()
+    {
+
+    }
+    entity(map<int,string> traits)
+    {
+        for(int i=0;i<traits.size();i++)
+        {
+            if(traits[i]=="cannibal")
+            {
+                cannibal=true;
+            }
+
+        }
+
+    }
     // enemy movement logic here
-    void act()
+    void act(map<int,Rectangle> targets,bool state)
     {
         switch (current)
         {
         case idle:
             Idle();
+            hunger+=0.01;
             break;
-        case hunting:
-            //hunt();
+        case eating:
+           if(cannibal)
+           {
+            hunt(targets);
+           }
+           else
+           {
+            graze(state);
+           }
+       
+       
+            
             break;
         case reproducing:
             reproduce();
@@ -132,6 +162,23 @@ public:
     void hunt(map<int,Rectangle> targets)
     {
         
+  
+         if(interest_counter>45)
+         {
+            current=idle;
+         }
+    }
+    void graze(bool state)
+    {
+        if(!state)
+        {
+
+        }
+
+    }
+    void eat()
+    {
+
     }
     void  reproduce()
     {
