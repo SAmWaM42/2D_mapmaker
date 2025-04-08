@@ -119,7 +119,7 @@ public:
             Idle();
             break;
         case hunting:
-            hunt();
+            //hunt();
             break;
         case reproducing:
             reproduce();
