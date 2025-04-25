@@ -7,8 +7,6 @@
 #include <iostream>
 #include <map>
 using namespace std;
-#define screenheight 720
-#define screenwidth 960
 #define RENDER_SCALE 2.0
 using json = nlohmann::json;
 
@@ -41,12 +39,16 @@ public:
         }
 
         InitWindow(screenwidth, screenheight, "indigoV2");
-        map<string, map<int, Texture2D>> textures;
-        Texture2D grass = LoadTexture("../assets/grass/grass.png");
+        map<string, map<int, Texture2D>> textures; 
         mapset mapset;
+        Texture2D grass = LoadTexture("../assets/grass/grass.png");
+        Texture2D tree = LoadTexture("../assets/trees/mytree.png");
+       
         textures = mapset.prepare_textures(textures, "grass", grass);
+        textures["tree"][0]=tree;
         string tile_name[textures.size()];
         tile_name[0] = "grass";
+        tile_name[1] = "tree";
 
         Texture2D current_tile_img;
         int current_image = 0;
@@ -131,10 +133,13 @@ public:
                 mapset.tiles[current_tile].position.height = current_tile_img.height;
                 mapset.tiles[current_tile].used = true;
                 mapset.tiles[current_tile].ongrid = "false";
-                mapset.tiles[current_tile].position.x = GetScreenToWorld2D(GetMousePosition(), camera.camera).x;
+                int x = (int)(GetScreenToWorld2D(GetMousePosition(), camera.camera).x / 40);
+                int y = (int)(GetScreenToWorld2D(GetMousePosition(), camera.camera).y / 40);
 
-                mapset.tiles[current_tile].position.y = GetScreenToWorld2D(GetMousePosition(), camera.camera).y;
+                mapset.tiles[current_tile].position.x = grid[x][y].y;
+                mapset.tiles[current_tile].position.y = grid[x][y].x + 40 - mapset.tiles[current_tile].position.height;
                 current_tile = (current_tile += 1);
+               
             }
 
             if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
@@ -164,12 +169,17 @@ public:
             if (IsKeyPressed(KEY_N) && tile_shift)
             {
                 // changing tile type
+                
 
-                current_image = (current_image + 1) % (textures.size() - 1);
+                current_image = (current_image + 1) % (textures.size() );
             }
             if (IsKeyPressed(KEY_N) && !tile_shift)
             {
                 // changing the variant of that specific tile type
+                if(variant>=textures[tile_name[current_image]].size())
+                {
+                    variant=0;
+                }
                 variant = (variant + 1) % textures[tile_name[current_image]].size();
             }
             if (IsKeyPressed(KEY_O))
@@ -203,7 +213,7 @@ public:
                 string name;
                 cout << "enter map name";
                 cin >> name;
-                mapset.edit_map(name, textures);
+               current_tile=mapset.edit_map(name, textures);
             }
 
             BeginDrawing();
@@ -232,13 +242,14 @@ public:
                     }
                 }
             }
-            for (int i = 0; i < sizeof(mapset.tiles) / sizeof(tile); i++)
+            for (int i = 0; i < mapset.tiles.size(); i++)
             {
                 if (mapset.tiles[i].used == true)
                 {
                     if (mapset.tiles[i].ongrid == "false")
                     {
                         DrawTexture(mapset.tiles[i].texture, mapset.tiles[i].position.x, mapset.tiles[i].position.y, RAYWHITE);
+                        
                     }
                 }
             }

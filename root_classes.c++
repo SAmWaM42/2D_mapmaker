@@ -13,12 +13,19 @@ using namespace std;
 #define screenheight 720
 #define screenwidth 960
 
+#define t_size 40
+#define g_tiles 100
+
 class world_object
 {
 public:
     int durability;
     Vector2 position;
     string name;
+    void  act()
+    {
+        return;
+    }
 };
 
 class tile
@@ -36,53 +43,23 @@ public:
         used = false;
     }
 };
-class Itemtype
+class static_entity : public world_object
 {
 public:
-    enum type
-    {
-        WEAPON,
-        SPELL
-    };
+    Vector2 dimensions{0, 0};
+    Rectangle collider;
+    map<string, Texture2D> anim_frames;
+    Texture2D current_frame;
+    int fram_counter;
+    
 };
 
-class Item : public world_object
-{
-public:
-    Itemtype type;
-    int stack_size;
-    Texture2D skin;
-    int range;
-    int knockback;
-    int value_changed;
-    int delay;
-    bool active;
-
-    Rectangle attack(Rectangle position, int facing)
-    {
-    }
-};
-class Weapon : public Item
-{
-
-public:
-    enum variant
-    {
-        RANGED,
-        MELEE
-    };
-    Weapon()
-    {
-        type.WEAPON;
-    }
-};
 class physics_entity : public world_object
 {
 public:
     Vector2 velocity = {0, 0};
     Vector2 dimensions{0, 0};
     Rectangle collider;
-    map<int, Item> inventory;
     map<string, Texture2D> anim_frames;
     Texture2D current_frame;
     int fram_counter;
@@ -108,132 +85,167 @@ public:
         flee
     };
     enum state current;
-    map<int,string> traits;
-    int interest_counter=0;
-    bool cannibal=false;
-    float hunger=0;
-    
+    map<int, string> traits;
+    map<string, Vector2> move_directions;
+    int interest_counter = 0;
+    bool cannibal = false;
+    float hunger = 0;
+    Vector2 target;
+    bool idle_moving = false;
+    bool hunt_target_found=false;
+    float idle_timer = 0;
+    int idle_time = 5;
+
     entity()
     {
-
+        move_directions["up"] = {0, -1};
+        move_directions["down"] = {0, 1};
+        move_directions["left"] = {-1, 0};
+        move_directions["right"] = {1, 0};
+        move_directions["up_left"] = {-1, -1};
+        move_directions["up_right"] = {1, -1};
+        move_directions["down_left"] = {-1, 1};
+        move_directions["down_right"] = {1, 1};
+        move_directions["none"] = {0, 0};
     }
-    entity(map<int,string> traits)
+    entity(map<int, string> traits)
     {
-        for(int i=0;i<traits.size();i++)
+        for (int i = 0; i < traits.size(); i++)
         {
-            if(traits[i]=="cannibal")
+            if (traits[i] == "cannibal")
             {
-                cannibal=true;
+                cannibal = true;
             }
-
         }
-
     }
     // enemy movement logic here
-    void act(map<int,Rectangle> targets,bool state)
+    void act(map<int, Rectangle> targets, bool state)
     {
         switch (current)
         {
         case idle:
             Idle();
-            hunger+=0.01;
+            hunger += 0.01;
             break;
         case eating:
-           if(cannibal)
-           {
-            hunt(targets);
-           }
-           else
-           {
-            graze(state);
-           }
-       
-       
-            
+            if (cannibal)
+            {
+                hunt(targets);
+            }
+            else
+            {
+                graze(state);
+            }
+
             break;
         case reproducing:
             reproduce();
             break;
         }
     }
+    void wander()
+    {
+        int a = position.x / t_size;
+        int b = position.y / t_size;
+        if (!idle_moving && idle_timer > idle_time)
+        {
+            idle_time = 0;
+            a = a + rand() % 2;
+            b = b + rand() % 2;
+            if (a > g_tiles || a < 0)
+            {
+                a = rand() % g_tiles;
+            }
+            if (a > g_tiles || a < 0)
+            {
+                b = rand() % g_tiles;
+            }
+
+            int direct = rand() % 1;
+            if (direct == 1)
+            {
+                a *= -1;
+                b *= -1;
+            }
+            target.x = a * t_size;
+            target.y = b * t_size;
+            idle_moving = true;
+        }
+        else
+        {
+            float dif_x = target.x - position.x;
+            
+            float dif_y = target.y - position.y;
+
+            if (abs(dif_x) > 0.2 || abs(dif_y) > 0.2)
+            {
+                float move_x=0; 
+                float move_y=0; 
+                
+                if(abs(dif_x) > abs(dif_y))
+                {
+                   move_x = sin(dif_x) ;
+                }
+                else if (abs(dif_x) <abs(dif_y))
+                {
+                    move_y = sin(dif_x) ;
+                }
+                else
+                {
+                    move_x = sin(dif_x) ;
+                    move_y = sin(dif_y) ;
+                }
+
+                position.x += move_x*speed;
+                position.y += move_y*speed;
+                 
+            }
+            else
+            {
+                idle_moving = false;
+            }
+        }
+        if (!idle_moving)
+        {
+            idle_timer += 0.4;
+        }
+    }
     void Idle()
     {
+
+       
     }
-    void hunt(map<int,Rectangle> targets)
+    void hunt(map<int, Rectangle> targets)
     {
-        
-  
-         if(interest_counter>45)
-         {
-            current=idle;
-         }
+    if(!hunt_target_found)
+    {
+        wander();
+    }
+
+
+        if (interest_counter > 45)
+        {
+            hunt_target_found = false;
+        }
     }
     void graze(bool state)
     {
-        if(!state)
+        if (!state)
         {
-
         }
-
     }
     void eat()
     {
-
     }
-    void  reproduce()
+    void reproduce()
     {
     }
     string track(Vector2 position)
     {
-        if(position.x>collider.x)
-        {
-           return "left";
-        }
-        else if(position.x<collider.x)
-        {
-           return "right";
-        }
-        
-        if(position.x>collider.y)
-        {
-            return "down";
-        }
-        else if(position.x<collider.y)
-        {
-            return "up";
-        } 
-
     }
-   
-    
+
     void move(string move_direct)
     {
-        if (move_direct=="down")
-        {
-            velocity.y = -1;
-            current_frame = anim_frames["back"];
-        }
-        else if (move_direct=="up")
-        {
-            velocity.y = 1;
-            current_frame = anim_frames["foward"];
-        }
-        collider.y += velocity.y;
-
-        if (move_direct=="left")
-
-        {
-            velocity.x = -1;
-            current_frame = anim_frames["left"];
-        }
-        else if (move_direct=="right")
-        {
-            velocity.x = 1;
-            current_frame = anim_frames["right"];
-        }
-        collider.x += velocity.x;
-
-        fram_counter = (fram_counter + 1) % 4;
     }
     void drawself()
     {
@@ -244,13 +256,10 @@ class player_controller : public physics_entity
 {
     void act()
     {
-       
     }
     player_controller()
     {
-        
     }
-    
 };
 
 class mod_cam
@@ -338,11 +347,11 @@ public:
     map<int, tile> tiles;
     map<int, tile> copy_tiles;
     int tilenumber = 0;
-    map<int, entity> actors;
-    map<int, Item> items;
+    map<int, world_object> actors;
     int text_length = 16;
     int tile_size = 40;
-    map<string, map<int, Texture2D>> prepare_textures(map<string, map<int, Texture2D>> textures, string name, Texture2D set_text)
+    map<int, map<int, world_object*>> object_locate;
+    map<string, map<int, Texture2D>> prepare_textnewures(map<string, map<int, Texture2D>> textures, string name, Texture2D set_text)
     {
 
         Rectangle bounds = {0, 0, text_length, text_length};
@@ -570,7 +579,7 @@ public:
             }
         }
     }
-    void edit_map(string file_name, map<string, map<int, Texture2D>> textures)
+    int edit_map(string file_name, map<string, map<int, Texture2D>> textures)
     {
 
         fstream map_file;
@@ -601,6 +610,7 @@ public:
                 tiles[i].texture = textures[tiles[i].type][tiles[i].variant];
             }
         }
+        return tilenumber;
     }
     int get_tile_size(tile tile_in[])
     {
@@ -662,9 +672,14 @@ class world_manager
 {
 public:
     mapset set;
-    enum world_state{menu,playing,paused};
+    enum world_state
+    {
+        menu,
+        playing,
+        paused
+    };
     enum world_state current_state;
-    static world_manager& getInstance()
+    static world_manager &getInstance()
     {
         static world_manager instance;
 
@@ -672,27 +687,17 @@ public:
     }
     void manage()
     {
-        switch(current_state)
+        switch (current_state)
         {
-            case menu:
+        case menu:
             break;
-            case playing:
+        case playing:
             break;
-            case paused:
+        case paused:
             break;
         }
-
     }
-    //add behaviour management and someform of renderer 
-
-private:
-    world_manager() {}
-    world_manager(world_manager const &);
-    void operator=(world_manager const &);
-
-public:
-    world_manager(world_manager const &) = delete;
-    void operator=(world_manager const &) = delete;
+    // add behaviour management and someform of renderer
 };
 
 #endif
