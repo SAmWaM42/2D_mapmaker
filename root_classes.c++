@@ -16,15 +16,269 @@ using namespace std;
 #define t_size 40
 #define g_tiles 100
 
+class entity;
+
+class modifier
+{
+public:
+    float value;
+    float active_time;
+    bool permanent = false;
+    bool finished = false;
+    int timer = 0;
+    modifier(float value, float timer, bool permanent)
+    {
+        this->value = value;
+        this->active_time = timer;
+        this->permanent = permanent;
+    }
+    void track()
+    {
+        timer++;
+        if (timer >= active_time && !permanent)
+        {
+            finished = true;
+        }
+    }
+};
+
+class durability
+{
+public:
+    int base_value;
+    map<int, modifier> modifiers;
+    float applied_value = 0;
+
+    durability(int base_value)
+    {
+        this->base_value = base_value;
+    }
+    void add_modifier(float value, float timer, bool permanent)
+    {
+        modifiers[modifiers.size()] = modifier(value, timer, permanent);
+    }
+    void update_mods()
+    {
+        for (int i = 0; i < modifiers.size(); i++)
+        {
+            modifiers[i].track();
+            if (modifiers[i].finished)
+            {
+                base_value += modifiers[i].value;
+                modifiers.erase(i);
+            }
+        }
+    }
+    void set_current_value()
+    {
+        for (int i = 0; i < modifiers.size(); i++)
+        {
+            if (modifiers[i].permanent)
+            {
+                applied_value += modifiers[i].value;
+            }
+        }
+    }
+    void act()
+    {
+        update_mods();
+        set_current_value();
+    }
+};
+class attack
+{
+public:
+    int base_value;
+    map<int, modifier> modifiers;
+    float applied_value = 0;
+
+    attack(int base_value)
+    {
+        this->base_value = base_value;
+    }
+    void add_modifier(float value, float timer, bool permanent)
+    {
+        modifiers[modifiers.size()] = modifier(value, timer, permanent);
+    }
+    void update_mods()
+    {
+        for (int i = 0; i < modifiers.size(); i++)
+        {
+            modifiers[i].track();
+            if (modifiers[i].finished)
+            {
+                base_value += modifiers[i].value;
+                modifiers.erase(i);
+            }
+        }
+    }
+    void set_current_value()
+    {
+        for (int i = 0; i < modifiers.size(); i++)
+        {
+            if (modifiers[i].permanent)
+            {
+                applied_value += modifiers[i].value;
+            }
+        }
+    }
+    void attack_target(world_object *target)
+    {
+        target->health.applied_value -= applied_value;
+    }
+    void act()
+    {
+        update_mods();
+        set_current_value();
+    }
+};
+class chase
+{  
+public:
+   
+    void chase_target(Vector2 target, Vector2 position, int speed)
+    {
+        float dif_x = target.x - position.x;
+        float dif_y = target.y - position.y;
+
+        if (abs(dif_x) > 0.2 || abs(dif_y) > 0.2)
+        {
+            float move_x = 0;
+            float move_y = 0;
+
+            if (abs(dif_x) > abs(dif_y))
+            {
+                move_x = sin(dif_x);
+            }
+            else if (abs(dif_x) < abs(dif_y))
+            {
+                move_y = sin(dif_x);
+            }
+            else
+            {
+                move_x = sin(dif_x);
+                move_y = sin(dif_y);
+            }
+
+            position.x += move_x * speed;
+            position.y += move_y * speed;
+        }
+    }
+    
+};
+class flee
+{
+    public:
+    void flee_target(Vector2 target, Vector2 position, int speed)
+    {
+        float dif_x = target.x - position.x;
+        float dif_y = target.y - position.y;
+
+        if (abs(dif_x) < 50 || abs(dif_y) < 50)
+        {
+            float move_x = 0;
+            float move_y = 0;
+
+            if (abs(dif_x) > abs(dif_y))
+            {
+                move_x = sin(dif_x);
+            }
+            else if (abs(dif_x) < abs(dif_y))
+            {
+                move_y = sin(dif_x);
+            }
+            else
+            {
+                move_x = sin(dif_x);
+                move_y = sin(dif_y);
+            }
+
+            position.x -= move_x * speed;
+            position.y -= move_y * speed;
+        }
+    }   
+};
+class eat
+{
+    public:
+    int eat_target(world_object *target)
+    {
+        return target->health.applied_value/2;
+    }
+    
+};
+class reproduce
+{
+    public:
+    entity* self;
+    int reprocuce_probability = 0;
+    int reproduce_cooldown = 0;
+    int reproduce_timer = 0;
+    bool reproduce_cooldown_active = false;
+   
+    reproduce(int reproduce_probability, int reproduce_cooldown,entity* self)
+    {
+        this->self = self;
+        this->reprocuce_probability = reproduce_probability;
+        this->reproduce_cooldown = reproduce_cooldown;
+    }
+    
+    entity reproduce_target(world_object *target,map<int,string> traits)
+    {
+        if (reproduce_cooldown_active == false)
+        {
+            int chance = rand() % 100;
+            if (chance <= reprocuce_probability)
+            {
+                entity* entity_ptr = dynamic_cast<entity*>(target);
+                reproduce_cooldown_active = true;
+                entity new_entity;
+                // set the charachtersistics of the new entity
+                
+                
+
+            }
+        }
+    }
+   
+       
+    
+    void set_reproduce_cooldown()
+    {
+        if (reproduce_cooldown_active)
+        {
+            reproduce_timer++;
+            if (reproduce_timer >= reproduce_cooldown)
+            {
+                reproduce_cooldown_active = false;
+                reproduce_timer = 0;
+            }
+        }
+    }
+};
+class wander
+{
+    
+};
+
+
 class world_object
 {
 public:
-    int durability;
+    durability health;
     Vector2 position;
+
     string name;
-    void  act()
+    virtual void act()
     {
         return;
+    }
+    void drawself()
+    {
+        return;
+    }
+    world_object() : health(0)
+    {
     }
 };
 
@@ -51,12 +305,12 @@ public:
     map<string, Texture2D> anim_frames;
     Texture2D current_frame;
     int fram_counter;
-    
 };
 
 class physics_entity : public world_object
 {
 public:
+    attack attack;
     Vector2 velocity = {0, 0};
     Vector2 dimensions{0, 0};
     Rectangle collider;
@@ -66,13 +320,17 @@ public:
     int speed;
     int facing;
     bool alive;
-};
-float find_distance(Vector2 p, Vector2 position)
-{
-    float dist_squared = pow(position.x - p.x, 2) + pow(position.y - p.y, 2);
+    physics_entity() : attack(0)
+    {
+    }
 
-    return sqrt(dist_squared);
-}
+    float find_distance(Vector2 p, Vector2 position)
+    {
+        float dist_squared = pow(position.x - p.x, 2) + pow(position.y - p.y, 2);
+
+        return sqrt(dist_squared);
+    }
+};
 
 class entity : public physics_entity
 {
@@ -92,12 +350,13 @@ public:
     float hunger = 0;
     Vector2 target;
     bool idle_moving = false;
-    bool hunt_target_found=false;
+    bool hunt_target_found = false;
     float idle_timer = 0;
     int idle_time = 5;
 
     entity()
     {
+
         move_directions["up"] = {0, -1};
         move_directions["down"] = {0, 1};
         move_directions["left"] = {-1, 0};
@@ -174,31 +433,30 @@ public:
         else
         {
             float dif_x = target.x - position.x;
-            
+
             float dif_y = target.y - position.y;
 
             if (abs(dif_x) > 0.2 || abs(dif_y) > 0.2)
             {
-                float move_x=0; 
-                float move_y=0; 
-                
-                if(abs(dif_x) > abs(dif_y))
+                float move_x = 0;
+                float move_y = 0;
+
+                if (abs(dif_x) > abs(dif_y))
                 {
-                   move_x = sin(dif_x) ;
+                    move_x = sin(dif_x);
                 }
-                else if (abs(dif_x) <abs(dif_y))
+                else if (abs(dif_x) < abs(dif_y))
                 {
-                    move_y = sin(dif_x) ;
+                    move_y = sin(dif_x);
                 }
                 else
                 {
-                    move_x = sin(dif_x) ;
-                    move_y = sin(dif_y) ;
+                    move_x = sin(dif_x);
+                    move_y = sin(dif_y);
                 }
 
-                position.x += move_x*speed;
-                position.y += move_y*speed;
-                 
+                position.x += move_x * speed;
+                position.y += move_y * speed;
             }
             else
             {
@@ -212,17 +470,13 @@ public:
     }
     void Idle()
     {
-
-       
     }
     void hunt(map<int, Rectangle> targets)
     {
-    if(!hunt_target_found)
-    {
-        wander();
-    }
-
-
+        if (!hunt_target_found)
+        {
+            wander();
+        }
         if (interest_counter > 45)
         {
             hunt_target_found = false;
@@ -350,7 +604,7 @@ public:
     map<int, world_object> actors;
     int text_length = 16;
     int tile_size = 40;
-    map<int, map<int, world_object*>> object_locate;
+    map<int, map<int, map<int, world_object *>>> object_locate;
     map<string, map<int, Texture2D>> prepare_textnewures(map<string, map<int, Texture2D>> textures, string name, Texture2D set_text)
     {
 
@@ -697,7 +951,22 @@ public:
             break;
         }
     }
+    void update_object_locate()
+    {
+
+        set.object_locate.clear();
+        for (int i = 0; i < set.actors.size(); i++)
+        {
+            int a = set.actors[i].position.x / t_size;
+            int b = set.actors[i].position.y / t_size;
+
+            set.object_locate[a][b][set.object_locate[a][b].size()] = &set.actors[i];
+        }
+    }
     // add behaviour management and someform of renderer
+};
+class world_renderer
+{
 };
 
 #endif
