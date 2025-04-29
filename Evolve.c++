@@ -19,7 +19,7 @@ class game
         InitWindow(screenwidth, screenheight, "Evolve");
         SetTargetFPS(60);
         textures=manager->set.prepare_textures(textures, "grass", LoadTexture("assets/grass/grass.png"));
-         manager->set.loadmap(textures,"new_test");
+         manager->set.loadmap(textures,"test_map");
         while (!WindowShouldClose())
         {
             BeginDrawing();

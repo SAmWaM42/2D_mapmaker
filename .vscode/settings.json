@@ -1,5 +1,5 @@
 {
-    "makefile.makefilePath": "C:\\Users\\samue\\OneDrive\\Documents\\gameV2\\Evolve_rpg\\Makefile",
+    "makefile.makefilePath": "Makefile",
     "makefile.launchConfigurations": [
         {
             "cwd": "c:\\Users\\samue\\OneDrive\\Documents\\gameV2",
@@ -21,6 +21,19 @@
         "*.embeddedhtml": "html",
         "tuple": "cpp",
         "iosfwd": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "bit": "cpp",
+        "*.tcc": "cpp",
+        "compare": "cpp",
+        "random": "cpp",
+        "fstream": "cpp",
+        "functional": "cpp",
+        "istream": "cpp",
+        "limits": "cpp",
+        "ostream": "cpp",
+        "sstream": "cpp",
+        "streambuf": "cpp",
+        "valarray": "cpp",
+        "variant": "cpp"
     }
 }

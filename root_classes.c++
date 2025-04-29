@@ -16,9 +16,6 @@ using namespace std;
 #define t_size 40
 #define g_tiles 100
 
-class entity;
-
-
 class modifier
 {
 public:
@@ -27,14 +24,7 @@ public:
     bool permanent = false;
     bool finished = false;
     int timer = 0;
-    modifier(float value, float timer, bool permanent)
-    {
-        this->value = value;
-        this->active_time = timer;
-        this->permanent = permanent;
-    }
-    modifier()
-    {}
+
     void track()
     {
         timer++;
@@ -43,22 +33,28 @@ public:
             finished = true;
         }
     }
+    void set_modifier(float value, float active_time, bool permanent)
+    {
+        this->value = value;
+        this->active_time = active_time;
+        this->permanent = permanent;
+    }
 };
-
-class durability
+class Stat
 {
 public:
-    int base_value;
+    float base_value;
     map<int, modifier> modifiers;
     float applied_value = 0;
 
-    durability(int base_value)
+    void set_base(float val)
     {
-        this->base_value = base_value;
+        base_value = val;
     }
     void add_modifier(float value, float timer, bool permanent)
     {
-        modifiers[modifiers.size()] = modifier(value, timer, permanent);
+
+        modifiers[modifiers.size()].set_modifier(value, timer, permanent);
     }
     void update_mods()
     {
@@ -87,6 +83,10 @@ public:
         update_mods();
         set_current_value();
     }
+};
+
+class durability : public Stat
+{
 };
 class world_object
 {
@@ -97,189 +97,22 @@ public:
     string name;
     virtual void act()
     {
+        health.act();
         return;
     }
-    void drawself()
+    virtual void drawself()
     {
         return;
-    }
-    world_object() : health(0)
-    {
     }
 };
 
-class attack
+class attack : public Stat
 {
-public:
-    int base_value;
-    map<int, modifier> modifiers;
-    float applied_value = 0;
-
-    attack(int base_value)
-    {
-        this->base_value = base_value;
-    }
-    void add_modifier(float value, float timer, bool permanent)
-    {
-        modifiers[modifiers.size()] = modifier(value, timer, permanent);
-    }
-    void update_mods()
-    {
-        for (int i = 0; i < modifiers.size(); i++)
-        {
-            modifiers[i].track();
-            if (modifiers[i].finished)
-            {
-                base_value += modifiers[i].value;
-                modifiers.erase(i);
-            }
-        }
-    }
-    void set_current_value()
-    {
-        for (int i = 0; i < modifiers.size(); i++)
-        {
-            if (modifiers[i].permanent)
-            {
-                applied_value += modifiers[i].value;
-            }
-        }
-    }
     void attack_target(world_object *target)
     {
-        target->health.applied_value -= applied_value;
-    }
-    void act()
-    {
-        update_mods();
-        set_current_value();
+        target->health.applied_value -= this->applied_value;
     }
 };
-
-class chase
-{
-public:
-    void chase_target(Vector2 target, Vector2 position, int speed)
-    {
-        float dif_x = target.x - position.x;
-        float dif_y = target.y - position.y;
-
-        if (abs(dif_x) > 0.2 || abs(dif_y) > 0.2)
-        {
-            float move_x = 0;
-            float move_y = 0;
-
-            if (abs(dif_x) > abs(dif_y))
-            {
-                move_x = sin(dif_x);
-            }
-            else if (abs(dif_x) < abs(dif_y))
-            {
-                move_y = sin(dif_x);
-            }
-            else
-            {
-                move_x = sin(dif_x);
-                move_y = sin(dif_y);
-            }
-
-            position.x += move_x * speed;
-            position.y += move_y * speed;
-        }
-    }
-};
-class flee
-{
-public:
-    void flee_target(Vector2 target, Vector2 position, int speed)
-    {
-        float dif_x = target.x - position.x;
-        float dif_y = target.y - position.y;
-
-        if (abs(dif_x) < 50 || abs(dif_y) < 50)
-        {
-            float move_x = 0;
-            float move_y = 0;
-
-            if (abs(dif_x) > abs(dif_y))
-            {
-                move_x = sin(dif_x);
-            }
-            else if (abs(dif_x) < abs(dif_y))
-            {
-                move_y = sin(dif_x);
-            }
-            else
-            {
-                move_x = sin(dif_x);
-                move_y = sin(dif_y);
-            }
-
-            position.x -= move_x * speed;
-            position.y -= move_y * speed;
-        }
-    }
-};
-class eat
-{
-public:
-    int eat_target(world_object *target)
-    {
-        return target->health.applied_value / 2;
-    }
-};
-// advanced behaviour to be finished later
-/*
-class reproduce
-{
-public:
-    entity *self;
-    int reprocuce_probability = 0;
-    int reproduce_cooldown = 0;
-    int reproduce_timer = 0;
-    bool reproduce_cooldown_active = false;
-
-    reproduce(int reproduce_probability, int reproduce_cooldown, entity *self)
-    {
-        this->self = self;
-        this->reprocuce_probability = reproduce_probability;
-        this->reproduce_cooldown = reproduce_cooldown;
-    }
-
-    entity reproduce_target(world_object *target, map<int, string> traits)
-    {
-        if (reproduce_cooldown_active == false)
-        {
-            int chance = rand() % 100;
-            if (chance <= reprocuce_probability)
-            {
-                entity *entity_ptr = dynamic_cast<entity *>(target);
-                reproduce_cooldown_active = true;
-                entity new_entity;
-                // set the charachtersistics of the new entity
-            }
-        }
-    }
-
-    void set_reproduce_cooldown()
-    {
-        if (reproduce_cooldown_active)
-        {
-            reproduce_timer++;
-            if (reproduce_timer >= reproduce_cooldown)
-            {
-                reproduce_cooldown_active = false;
-                reproduce_timer = 0;
-            }
-        }
-    }
-};
-*/
-class wander
-{
-};
-
-
 class tile
 {
 public:
@@ -295,7 +128,7 @@ public:
         used = false;
     }
 };
-class static_entity : public world_object
+class Static_entity : public world_object
 {
 public:
     Vector2 dimensions{0, 0};
@@ -318,281 +151,6 @@ public:
     int speed;
     int facing;
     bool alive;
-    physics_entity() : attack(0)
-    {
-    }
-
-    float find_distance(Vector2 p, Vector2 position)
-    {
-        float dist_squared = pow(position.x - p.x, 2) + pow(position.y - p.y, 2);
-
-        return sqrt(dist_squared);
-    }
-};
-
-class entity : public physics_entity
-{
-public:
-    enum state
-    {
-        idle,
-        eating,
-        reproducing,
-        flee
-    };
-    enum state current;
-    map<int, string> traits;
-    map<string, Vector2> move_directions;
-    int interest_counter = 0;
-    bool cannibal = false;
-    float hunger = 0;
-    Vector2 target;
-    bool idle_moving = false;
-    bool hunt_target_found = false;
-    float idle_timer = 0;
-    int idle_time = 5;
-
-    entity()
-    {
-
-        move_directions["up"] = {0, -1};
-        move_directions["down"] = {0, 1};
-        move_directions["left"] = {-1, 0};
-        move_directions["right"] = {1, 0};
-        move_directions["up_left"] = {-1, -1};
-        move_directions["up_right"] = {1, -1};
-        move_directions["down_left"] = {-1, 1};
-        move_directions["down_right"] = {1, 1};
-        move_directions["none"] = {0, 0};
-    }
-    entity(map<int, string> traits)
-    {
-        for (int i = 0; i < traits.size(); i++)
-        {
-            if (traits[i] == "cannibal")
-            {
-                cannibal = true;
-            }
-        }
-    }
-    // enemy movement logic here
-    void act(map<int, Rectangle> targets, bool state)
-    {
-        switch (current)
-        {
-        case idle:
-            Idle();
-            hunger += 0.01;
-            break;
-        case eating:
-            if (cannibal)
-            {
-                hunt(targets);
-            }
-            else
-            {
-                graze(state);
-            }
-
-            break;
-        case reproducing:
-            reproduce();
-            break;
-        }
-    }
-    void wander()
-    {
-        int a = position.x / t_size;
-        int b = position.y / t_size;
-        if (!idle_moving && idle_timer > idle_time)
-        {
-            idle_time = 0;
-            a = a + rand() % 2;
-            b = b + rand() % 2;
-            if (a > g_tiles || a < 0)
-            {
-                a = rand() % g_tiles;
-            }
-            if (a > g_tiles || a < 0)
-            {
-                b = rand() % g_tiles;
-            }
-
-            int direct = rand() % 1;
-            if (direct == 1)
-            {
-                a *= -1;
-                b *= -1;
-            }
-            target.x = a * t_size;
-            target.y = b * t_size;
-            idle_moving = true;
-        }
-        else
-        {
-            float dif_x = target.x - position.x;
-
-            float dif_y = target.y - position.y;
-
-            if (abs(dif_x) > 0.2 || abs(dif_y) > 0.2)
-            {
-                float move_x = 0;
-                float move_y = 0;
-
-                if (abs(dif_x) > abs(dif_y))
-                {
-                    move_x = sin(dif_x);
-                }
-                else if (abs(dif_x) < abs(dif_y))
-                {
-                    move_y = sin(dif_x);
-                }
-                else
-                {
-                    move_x = sin(dif_x);
-                    move_y = sin(dif_y);
-                }
-
-                position.x += move_x * speed;
-                position.y += move_y * speed;
-            }
-            else
-            {
-                idle_moving = false;
-            }
-        }
-        if (!idle_moving)
-        {
-            idle_timer += 0.4;
-        }
-    }
-    void Idle()
-    {
-    }
-    void hunt(map<int, Rectangle> targets)
-    {
-        if (!hunt_target_found)
-        {
-            wander();
-        }
-        if (interest_counter > 45)
-        {
-            hunt_target_found = false;
-        }
-    }
-    void graze(bool state)
-    {
-        if (!state)
-        {
-        }
-    }
-    void eat()
-    {
-    }
-    void reproduce()
-    {
-    }
-    string track(Vector2 position)
-    {
-    }
-
-    void move(string move_direct)
-    {
-    }
-    void drawself()
-    {
-        DrawTexture(current_frame, position.x, position.y, RAYWHITE);
-    }
-};
-// class may be used later if i want to add a player ti the world
-// to interact with it
-class player_controller : public physics_entity
-{
-    void act()
-    {
-    }
-    player_controller()
-    {
-    }
-};
-
-class mod_cam
-{
-
-public:
-    Camera2D camera;
-    Vector2 velocity;
-    int velocity_x = 0;
-    int velocity_y = 0;
-    mod_cam(Vector2 target, Vector2 offset, float zoom, int rotation)
-    {
-        camera.target = target;
-        camera.offset = offset;
-        camera.rotation = rotation;
-        camera.zoom = zoom;
-    }
-    mod_cam()
-    {
-    }
-
-    void update_position(Vector2 play, Vector2 velocity)
-    {
-        int distance_x = play.x - camera.target.x;
-        int distance_y = play.y - camera.target.y;
-
-        if (distance_x >= 200 || distance_x <= -200)
-        {
-            if (distance_x != 0)
-            {
-                if (distance_x > 0)
-                {
-                    camera.target.x += 2;
-                }
-                else
-                {
-                    camera.target.x += -2;
-                }
-            }
-        }
-        if (distance_y > 100 || distance_y < -100)
-        {
-
-            if (distance_y > 0)
-            {
-                camera.target.y += velocity.y;
-            }
-            else
-            {
-
-                camera.target.y -= 2;
-            }
-        }
-    }
-
-    void move_cam()
-    {
-
-        if (IsKeyDown(KEY_A))
-        {
-            velocity_x = -1;
-            camera.target.x -= 1;
-        }
-        else if (IsKeyDown(KEY_D))
-        {
-            velocity_x = 1;
-            camera.target.x += 1;
-        }
-        if (IsKeyDown(KEY_S))
-        {
-            velocity_y = 1;
-            camera.target.y += 1;
-        }
-        else if (IsKeyDown(KEY_W))
-        {
-            velocity_y = -1;
-            camera.target.y -= 1;
-        }
-    }
 };
 
 class mapset
@@ -601,10 +159,10 @@ public:
     map<int, tile> tiles;
     map<int, tile> copy_tiles;
     int tilenumber = 0;
+    //decide how i am going to store entities in the game i.e. as physics objects and static objects
     map<int, world_object> actors;
     int text_length = 16;
     int tile_size = 40;
-    map<int, map<int, map<int, world_object *>>> object_locate;
     map<string, map<int, Texture2D>> prepare_textures(map<string, map<int, Texture2D>> textures, string name, Texture2D set_text)
     {
 
@@ -625,7 +183,6 @@ public:
                 bounds.x = 0;
                 bounds.y += text_length;
             }
-            cout << bounds.x;
 
             UnloadImage(gt_copy);
         }
@@ -639,7 +196,7 @@ public:
         fstream map_file;
         try
         {
-            map_file.open("assets/maps/"+ name + ".json", ios::in);
+            map_file.open("assets/maps/" + name + ".json", ios::in);
         }
         catch (exception e)
         {
@@ -650,7 +207,7 @@ public:
         map_data = nlohmann::json::parse(map_file);
 
         tilenumber = map_data["tile_number"];
-       
+
         for (int i = 0; i < map_data["tile_number"]; i++)
         {
             if (map_data[to_string(i)][0] == "mob")
@@ -659,7 +216,7 @@ public:
                                           map_data[to_string(i)][2][1],
                                           map_data[to_string(i)][2][3],
                                           map_data[to_string(i)][2][2]};
-                entity temp;
+                physics_entity temp;
                 actors[i];
                 temp.position = {pos.x, pos.y};
                 temp.dimensions = {pos.width, pos.height};
@@ -676,17 +233,27 @@ public:
             }
             else
             {
-                
-                tiles[i];
-                tiles[i].type = map_data[to_string(i)][0];
-                tiles[i].variant = map_data[to_string(i)][1];
-                tiles[i].position.x = map_data[to_string(i)][2][0];
-                tiles[i].position.y = map_data[to_string(i)][2][1];
-                tiles[i].position.height = map_data[to_string(i)][2][2];
-                tiles[i].position.width = map_data[to_string(i)][2][3];
-                tiles[i].ongrid = map_data[to_string(i)][2][4];
-                tiles[i].used = true;
-                tiles[i].texture = textures[tiles[i].type][tiles[i].variant];
+
+                try
+                {
+                   
+                    tiles[i];
+                    tiles[i].type = map_data[to_string(i)][0];
+                    tiles[i].variant = map_data[to_string(i)][1];
+                    tiles[i].position.x = map_data[to_string(i)][2][0];
+                    tiles[i].position.y = map_data[to_string(i)][2][1];
+                    tiles[i].position.height = map_data[to_string(i)][2][2];
+                    tiles[i].position.width = map_data[to_string(i)][2][3];
+                    tiles[i].ongrid = map_data[to_string(i)][2][4];
+                    tiles[i].used = true;
+                    tiles[i].texture = textures[tiles[i].type][tiles[i].variant];
+                  
+
+                }
+                catch (exception e)
+                {
+                    cout << "error loading tile" << i;
+                }
             }
         }
     }
@@ -866,7 +433,7 @@ public:
                 tiles[i].texture = textures[tiles[i].type][tiles[i].variant];
             }
         }
-        return tilenumber;
+        return tilenumber-1;
     }
     int get_tile_size(tile tile_in[])
     {
@@ -924,11 +491,203 @@ public:
     }
 };
 
+class State
+{
+public:
+    enum State_type
+    {
+        initiate,
+        active,
+        paused,
+        dead
+    };
+
+    enum State_type current;
+    void update_State()
+    {
+    }
+};
+class wander : public State
+{
+public:
+    int speed;
+    int max_grid;
+    Vector2 position;
+    Vector2 target;
+    void set_vals(int speed, int max_grid, Vector2 position)
+    {
+
+        this->position = position;
+        this->max_grid = max_grid;
+        this->speed = speed;
+        current = initiate;
+    }
+    void update_State()
+    {
+        if (current == initiate)
+        {
+            target.x = position.x + (rand() % max_grid) * t_size;
+            target.y = position.y + (rand() % max_grid) * t_size;
+            current = active;
+        }
+        if (current == active)
+        {
+            float dif_x = target.x - position.x;
+
+            float dif_y = target.y - position.y;
+
+            if (abs(dif_x) > 0.2 || abs(dif_y) > 0.2)
+            {
+                float move_x = 0;
+                float move_y = 0;
+
+                if (abs(dif_x) > abs(dif_y))
+                {
+                    move_x = sin(dif_x);
+                }
+                else if (abs(dif_x) < abs(dif_y))
+                {
+                    move_y = sin(dif_x);
+                }
+                else
+                {
+                    move_x = sin(dif_x);
+                    move_y = sin(dif_y);
+                }
+
+                position.x += move_x * speed;
+                position.y += move_y * speed;
+            }
+            else
+            {
+                current = initiate;
+            }
+        }
+    }
+};
+
+class entity : public physics_entity
+{
+public:
+    wander wander_State;
+
+    void initiate(int speed, int facing, Vector2 position, Vector2 dimensions, int max_wander_grid)
+    {
+        this->position = position;
+        this->dimensions = dimensions;
+        this->speed = speed;
+        this->facing = facing;
+        wander_State.set_vals(speed, max_wander_grid, position);
+        alive = true;
+    }
+    void act() override
+    {
+        wander_State.update_State();
+
+        if (alive)
+        {
+            position.x = wander_State.position.x;
+            position.y = wander_State.position.y;
+        }
+        wander_State.position = position;
+    }
+};
+
+class player_controller : public physics_entity
+{
+    void act()
+    {
+    }
+    player_controller()
+    {
+    }
+};
+
+class mod_cam
+{
+
+public:
+    Camera2D camera;
+    Vector2 velocity;
+    int velocity_x = 0;
+    int velocity_y = 0;
+    mod_cam(Vector2 target, Vector2 offset, float zoom, int rotation)
+    {
+        camera.target = target;
+        camera.offset = offset;
+        camera.rotation = rotation;
+        camera.zoom = zoom;
+    }
+    mod_cam()
+    {
+    }
+
+    void update_position(Vector2 play, Vector2 velocity)
+    {
+        int distance_x = play.x - camera.target.x;
+        int distance_y = play.y - camera.target.y;
+
+        if (distance_x >= 200 || distance_x <= -200)
+        {
+            if (distance_x != 0)
+            {
+                if (distance_x > 0)
+                {
+                    camera.target.x += 2;
+                }
+                else
+                {
+                    camera.target.x += -2;
+                }
+            }
+        }
+        if (distance_y > 100 || distance_y < -100)
+        {
+
+            if (distance_y > 0)
+            {
+                camera.target.y += velocity.y;
+            }
+            else
+            {
+
+                camera.target.y -= 2;
+            }
+        }
+    }
+
+    void move_cam()
+    {
+
+        if (IsKeyDown(KEY_A))
+        {
+            velocity_x = -1;
+            camera.target.x -= 1;
+        }
+        else if (IsKeyDown(KEY_D))
+        {
+            velocity_x = 1;
+            camera.target.x += 1;
+        }
+        if (IsKeyDown(KEY_S))
+        {
+            velocity_y = 1;
+            camera.target.y += 1;
+        }
+        else if (IsKeyDown(KEY_W))
+        {
+            velocity_y = -1;
+            camera.target.y -= 1;
+        }
+    }
+};
+
 class world_manager
 {
 public:
     mapset set;
-    enum world_state
+    map<int, map<int, map<int, world_object *>>> object_locate;
+    enum world_State
     {
         loading,
         menu,
@@ -936,7 +695,7 @@ public:
         paused
 
     };
-    enum world_state current_state;
+    enum world_State current_State;
     static world_manager &getInstance()
     {
         static world_manager instance;
@@ -944,7 +703,7 @@ public:
     }
     void manage()
     {
-        switch (current_state)
+        switch (current_State)
         {
         case loading:
             break;
@@ -962,15 +721,22 @@ public:
 
     void update_object_locate()
     {
+        if (object_locate.size() == 0)
+        {
+            object_locate.clear();
+        }
 
-        set.object_locate.clear();
         for (int i = 0; i < set.actors.size(); i++)
         {
             int a = set.actors[i].position.x / t_size;
             int b = set.actors[i].position.y / t_size;
 
-            set.object_locate[a][b][set.object_locate[a][b].size()] = &set.actors[i];
+            object_locate[a][b][object_locate[a][b].size()] = &set.actors[i];
         }
+    }
+    void update_world_objects()
+    {
+
     }
     // add behaviour management and someform of renderer
 };

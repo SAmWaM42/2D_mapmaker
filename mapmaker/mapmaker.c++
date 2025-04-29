@@ -261,11 +261,11 @@ public:
         CloseWindow();
     }
 };
-/*int main()
+int main()
 {
     tileeditor editor;
     editor.run_editor();
 }
-    */
+    
 
 #endif
