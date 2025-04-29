@@ -47,6 +47,7 @@ public:
         textures = mapset.prepare_textures(textures, "grass", grass);
         textures["tree"][0]=tree;
         string tile_name[textures.size()];
+         cout<<textures.size();
         tile_name[0] = "grass";
         tile_name[1] = "tree";
 
@@ -260,10 +261,11 @@ public:
         CloseWindow();
     }
 };
-int main()
+/*int main()
 {
     tileeditor editor;
     editor.run_editor();
 }
+    */
 
 #endif
