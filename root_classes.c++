@@ -252,10 +252,25 @@ public:
                 }
                 catch (exception e)
                 {
-                    cout << "error loading tile" << i;
+                    cout << "blank tile" << i;
+                    tiles[i].used = false;
                 }
             }
         }
+        map_file.close();
+      
+        for (int i = 0; i < tilenumber; i++)
+        {
+            if (tiles[i].used)
+            {
+                copy_tiles[copy_tiles.size()] = tiles[i];
+               
+            }
+        }
+        tilenumber = copy_tiles.size();
+        tiles=copy_tiles;
+        copy_tiles.clear();
+        cout<<tilenumber;
     }
 
     void save_file()
@@ -312,7 +327,7 @@ public:
 
                     if (tiles[j].used && i != j)
                     {
-                        // reduce all other tiles to a  grid number  and set a booleann based on whether a tile is present or not
+                        // reduce all other tiles to a  grid number  and set a boolean based on whether a tile is present or not
                         int grid_x_compare = (int)tiles[j].position.x / 40;
                         int grid_y_compare = (int)tiles[j].position.y / 40;
 
@@ -420,18 +435,27 @@ public:
         tilenumber = map_data["tile_number"];
         for (int i = 0; i < map_data["tile_number"]; i++)
         {
-            {
-                tiles[i];
-                tiles[i].type = map_data[to_string(i)][0];
-                tiles[i].variant = map_data[to_string(i)][1];
-                tiles[i].position.x = map_data[to_string(i)][2][0];
-                tiles[i].position.y = map_data[to_string(i)][2][1];
-                tiles[i].position.height = map_data[to_string(i)][2][2];
-                tiles[i].position.width = map_data[to_string(i)][2][3];
-                tiles[i].ongrid = map_data[to_string(i)][2][4];
-                tiles[i].used = true;
-                tiles[i].texture = textures[tiles[i].type][tiles[i].variant];
-            }
+            try
+                {
+                   
+                    tiles[i];
+                    tiles[i].type = map_data[to_string(i)][0];
+                    tiles[i].variant = map_data[to_string(i)][1];
+                    tiles[i].position.x = map_data[to_string(i)][2][0];
+                    tiles[i].position.y = map_data[to_string(i)][2][1];
+                    tiles[i].position.height = map_data[to_string(i)][2][2];
+                    tiles[i].position.width = map_data[to_string(i)][2][3];
+                    tiles[i].ongrid = map_data[to_string(i)][2][4];
+                    tiles[i].used = true;
+                    tiles[i].texture = textures[tiles[i].type][tiles[i].variant];
+                  
+
+                }
+                catch (exception e)
+                {
+                    cout << "blank tile" << i;
+                    tiles[i].used = false;
+                }
         }
         return tilenumber-1;
     }
