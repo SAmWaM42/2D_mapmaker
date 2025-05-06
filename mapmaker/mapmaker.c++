@@ -43,13 +43,16 @@ public:
         mapset mapset;
         Texture2D grass = LoadTexture("../assets/grass/grass.png");
         Texture2D tree = LoadTexture("../assets/trees/mytree.png");
+        Texture2D slime_spawner = LoadTexture("../assets/mob/slime_spawner.png");
        
         textures = mapset.prepare_textures(textures, "grass", grass);
+        textures = mapset.prepare_textures(textures, "slime_spawner", slime_spawner);
         textures["tree"][0]=tree;
         string tile_name[textures.size()];
          cout<<textures.size();
         tile_name[0] = "grass";
         tile_name[1] = "tree";
+        tile_name[2] = "slime_spawner";
 
         Texture2D current_tile_img;
         int current_image = 0;
@@ -101,8 +104,9 @@ public:
                     {
                         for (int j = 0; j < mapset.tiles.size(); j++)
                         {
-                            if (mapset.tiles[i].used)
+                            if (mapset.tiles[i].used && mapset.tiles[i].ongrid == "true" && mapset.tiles[j].ongrid == "true")
                             {
+                                
                                 if (i != j)
                                 {
                                     layered = CheckCollisionRecs(mapset.tiles[i].position, mapset.tiles[j].position);
