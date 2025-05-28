@@ -44,15 +44,18 @@ public:
         Texture2D grass = LoadTexture("../assets/grass/grass.png");
         Texture2D tree = LoadTexture("../assets/trees/mytree.png");
         Texture2D slime_spawner = LoadTexture("../assets/mob/slime_spawner.png");
+        Texture2D slime = LoadTexture("../assets/mob/slime.png");
        
         textures = mapset.prepare_textures(textures, "grass", grass);
         textures = mapset.prepare_textures(textures, "slime_spawner", slime_spawner);
+        textures=mapset.prepare_textures(textures, "slime", tree);
         textures["tree"][0]=tree;
         string tile_name[textures.size()];
          cout<<textures.size();
         tile_name[0] = "grass";
         tile_name[1] = "tree";
         tile_name[2] = "slime_spawner";
+        tile_name[3] = "slime";
 
         Texture2D current_tile_img;
         int current_image = 0;
@@ -86,6 +89,7 @@ public:
 
             if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !mode_shift)
             {
+                
 
                 mapset.tiles[current_tile].position.width = current_tile_img.width;
                 mapset.tiles[current_tile].position.height = current_tile_img.height;

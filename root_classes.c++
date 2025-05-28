@@ -16,6 +16,7 @@ using namespace std;
 #define t_size 40
 #define g_tiles 100
 
+
 class modifier
 {
 public:
@@ -95,6 +96,10 @@ public:
     Vector2 position;
 
     string name;
+    virtual void set_variables()
+    {
+       
+    }
     virtual void act()
     {
         health.act();
@@ -104,6 +109,36 @@ public:
     {
         return;
     }
+};
+class spawner
+{
+    public:
+    Rectangle spawn_area;
+    int spawn_rate;
+    int spawn_timer = 0;
+    world_object *spawn_object;
+    string  spawn_type;
+    map<int, world_object*> spawn_list;
+    void set_spawn_object(world_object*spawn_object)
+    { 
+        this->spawn_object = spawn_object;
+       
+    }
+    void spawn()
+    {
+        spawn_timer++;
+        if (spawn_timer >= spawn_rate)
+        {
+            spawn_timer = 0;
+            world_object *temp = new world_object(*spawn_object);
+            temp->position.x = rand() % (int)spawn_area.width + spawn_area.x;
+            temp->position.y = rand() % (int)spawn_area.height + spawn_area.y;
+            spawn_list[spawn_list.size()] = temp;
+        }
+    }
+    
+
+
 };
 
 class attack : public Stat
@@ -159,8 +194,8 @@ public:
     map<int, tile> tiles;
     map<int, tile> copy_tiles;
     int tilenumber = 0;
-    //decide how i am going to store entities in the game i.e. as physics objects and static objects
     map<int, world_object> actors;
+    map<int,spawner> spawners;
     int text_length = 16;
     int tile_size = 40;
     map<string, map<int, Texture2D>> prepare_textures(map<string, map<int, Texture2D>> textures, string name, Texture2D set_text)
@@ -210,19 +245,20 @@ public:
 
         for (int i = 0; i < map_data["tile_number"]; i++)
         {
-            if (map_data[to_string(i)][0] == "mob")
+            if (map_data[to_string(i)][0] == "slime_spawner")
             {
                 Rectangle pos = Rectangle{map_data[to_string(i)][2][0],
                                           map_data[to_string(i)][2][1],
                                           map_data[to_string(i)][2][3],
                                           map_data[to_string(i)][2][2]};
-                physics_entity temp;
-                actors[i];
-                temp.position = {pos.x, pos.y};
-                temp.dimensions = {pos.width, pos.height};
-                temp.current_frame = textures[map_data[to_string(i)][0]][map_data[to_string(i)][1]];
-                actors[i] = temp;
+                spawner temp;
+                temp.spawn_type = map_data[to_string(i)][0];
+                temp.spawn_area = pos;
+                temp.spawn_rate = rand() % 100 + 1; // random spawn rate
+                temp.spawn_timer = 0;
+                spawners[i] = temp;
             }
+            
             else if (map_data[to_string(i)][0] == "weapon")
             {
 
@@ -704,6 +740,22 @@ public:
             camera.target.y -= 1;
         }
     }
+};
+class spawn_manager
+{
+public:
+
+    void prepare_spawners(map<int,spawner*> spawners)
+    {
+    //add logic to parse the json file with the mob data and assign that mob type to the spawner based on  the spawn_type
+
+        for (int i = 0; i < spawners.size(); i++)
+        {
+            spawners[i]->spawn();
+        }
+    }
+    
+
 };
 
 class world_manager
