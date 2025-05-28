@@ -742,18 +742,59 @@ public:
     }
 };
 class spawn_manager
-{
+{   
 public:
-
-    void prepare_spawners(map<int,spawner*> spawners)
+nlohmann::json entity_data;
+    spawn_manager()
     {
-    //add logic to parse the json file with the mob data and assign that mob type to the spawner based on  the spawn_type
-
-        for (int i = 0; i < spawners.size(); i++)
+        try
         {
-            spawners[i]->spawn();
+            fstream entity_file;
+            entity_file.open("assets/Entity_data/mob.json", ios::in);
+            if (!entity_file.is_open())
+            {
+                throw runtime_error("Failed to open mob.json");
+            }
+            entity_data = nlohmann::json::parse(entity_file);
+        }
+        catch (const exception &e)
+        {
+            cout << "Error loading mob data: " << e.what() << endl;
         }
     }
+    void prepare_spawners(spawner* spawners)
+    {
+    //add logic to parse the json file with the mob data and assign that mob type to the spawner based on  the spawn_type
+    fstream entity_file;
+      
+        
+       
+     
+            if (spawners->spawn_type == "slime_spawner")
+            {
+                entity *temp = new entity();
+                temp->initiate(
+                    entity_data["slime"]["speed"],
+                    0
+                    ,{spawners->spawn_area.x+rand()%10,spawners->spawn_area.y+rand()%10}
+                    , Vector2{entity_data["slime"]["width"],entity_data["slime"]["height"]}
+                    , 10
+                );
+                spawners->set_spawn_object(temp);
+            }
+            else if (spawners->spawn_type == "skeleton_spawner")
+            {
+                world_object *temp = new world_object();
+                temp->name = "skeleton";
+                temp->health.set_base(150);
+                spawners->set_spawn_object(temp);
+            }
+            
+        }
+
+      
+          
+    
     
 
 };
@@ -763,6 +804,8 @@ class world_manager
 public:
     mapset set;
     map<int, map<int, map<int, world_object *>>> object_locate;
+    spawn_manager spawn_manager;
+   
     enum world_State
     {
         loading,
@@ -792,6 +835,22 @@ public:
         }
 
         update_object_locate();
+        for(int i=0;i<set.spawners.size();i++)
+        {
+            spawn_manager.prepare_spawners(&set.spawners[i]);
+        
+        }
+        for (int i = 0; i < set.spawners.size(); i++)
+        {
+            for(int j = 0; j < set.spawners[i].spawn_list.size(); j++)
+            {
+                set.spawners[i].spawn();
+                set.spawners[i].spawn_list[j]->act();
+                set.spawners[i].spawn_list[j]->drawself();
+            }
+        
+        }
+      
         set.drawmap();
     }
 
