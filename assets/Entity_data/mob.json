@@ -1,10 +1,21 @@
-{"slime":
+{
+    "slime":
 {   
-    "type": "basic",
-    "texture": "assets/mobs/slime.png",
+ "basic":
+ {
+    "texture": 0,
     "width":30,
     "height":30,
     "speed":1.5,
-    "health": 100  
+    "health": 100 
+ },
+ "elite" : {
+    "texture": 1,
+    "width":45,
+    "height":45,
+    "speed":1.0,
+    "health": 200 
+ }
+
  }
 }

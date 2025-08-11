@@ -16,138 +16,6 @@ using namespace std;
 #define t_size 40
 #define g_tiles 100
 
-
-class modifier
-{
-public:
-    float value;
-    float active_time;
-    bool permanent = false;
-    bool finished = false;
-    int timer = 0;
-
-    void track()
-    {
-        timer++;
-        if (timer >= active_time && !permanent)
-        {
-            finished = true;
-        }
-    }
-    void set_modifier(float value, float active_time, bool permanent)
-    {
-        this->value = value;
-        this->active_time = active_time;
-        this->permanent = permanent;
-    }
-};
-class Stat
-{
-public:
-    float base_value;
-    map<int, modifier> modifiers;
-    float applied_value = 0;
-
-    void set_base(float val)
-    {
-        base_value = val;
-    }
-    void add_modifier(float value, float timer, bool permanent)
-    {
-
-        modifiers[modifiers.size()].set_modifier(value, timer, permanent);
-    }
-    void update_mods()
-    {
-        for (int i = 0; i < modifiers.size(); i++)
-        {
-            modifiers[i].track();
-            if (modifiers[i].finished)
-            {
-                base_value += modifiers[i].value;
-                modifiers.erase(i);
-            }
-        }
-    }
-    void set_current_value()
-    {
-        for (int i = 0; i < modifiers.size(); i++)
-        {
-            if (modifiers[i].permanent)
-            {
-                applied_value += modifiers[i].value;
-            }
-        }
-    }
-    void act()
-    {
-        update_mods();
-        set_current_value();
-    }
-};
-
-class durability : public Stat
-{
-};
-class world_object
-{
-public:
-    durability health;
-    Vector2 position;
-
-    string name;
-    virtual void set_variables()
-    {
-       
-    }
-    virtual void act()
-    {
-        health.act();
-        return;
-    }
-    virtual void drawself()
-    {
-        return;
-    }
-};
-class spawner
-{
-    public:
-    Rectangle spawn_area;
-    int spawn_rate;
-    int spawn_timer = 0;
-    world_object *spawn_object;
-    string  spawn_type;
-    map<int, world_object*> spawn_list;
-    void set_spawn_object(world_object*spawn_object)
-    { 
-        this->spawn_object = spawn_object;
-       
-    }
-    void spawn()
-    {
-        spawn_timer++;
-        if (spawn_timer >= spawn_rate)
-        {
-            spawn_timer = 0;
-            world_object *temp = new world_object(*spawn_object);
-            temp->position.x = rand() % (int)spawn_area.width + spawn_area.x;
-            temp->position.y = rand() % (int)spawn_area.height + spawn_area.y;
-            spawn_list[spawn_list.size()] = temp;
-        }
-    }
-    
-
-
-};
-
-class attack : public Stat
-{
-    void attack_target(world_object *target)
-    {
-        target->health.applied_value -= this->applied_value;
-    }
-};
 class tile
 {
 public:
@@ -163,39 +31,67 @@ public:
         used = false;
     }
 };
-class Static_entity : public world_object
+class world_object
 {
 public:
-    Vector2 dimensions{0, 0};
+    Rectangle render_rec;
+    Texture2D texture;
     Rectangle collider;
-    map<string, Texture2D> anim_frames;
-    Texture2D current_frame;
-    int fram_counter;
+    Vector2 force;
+    void act()
+    {
+    }
 };
-
-class physics_entity : public world_object
+class mob : public world_object
 {
 public:
-    attack attack;
-    Vector2 velocity = {0, 0};
-    Vector2 dimensions{0, 0};
-    Rectangle collider;
-    map<string, Texture2D> anim_frames;
-    Texture2D current_frame;
-    int fram_counter;
-    int speed;
-    int facing;
-    bool alive;
+    void set_self(
+        Rectangle render_rec,
+        Texture2D texture,
+        Rectangle collider)
+    {
+        this->render_rec = render_rec;
+        this->texture = texture;
+        this->collider = collider;
+    }
+    void act()
+    {
+    }
+    void drawself()
+    {
+    }
+};
+class spawner
+{
+
+public:
+    string spawn_type;
+    Rectangle spawn_area;
+    float spawn_interval;
+    float spawn_timer;
+    nlohmann::json mob_data;
+
+    void prepare_spawner(string spawn_type, Rectangle spawn_area, float spawn_interval)
+    {
+        this->spawn_type = spawn_type;
+        this->spawn_area = spawn_area;
+        this->spawn_interval = spawn_interval;
+        spawn_timer = 0;
+    }
+    void set_spawnable_mob(nlohmann::json mob_data)
+    {
+        this->mob_data = mob_data;
+    }
 };
 
 class mapset
 {
 public:
-    map<int, tile> tiles;
-    map<int, tile> copy_tiles;
+    vector<tile> tiles;
+    vector<tile> copy_tiles;
     int tilenumber = 0;
-    map<int, world_object> actors;
-    map<int,spawner> spawners;
+    vector<world_object> actors;
+    vector<spawner> spawners;
     int text_length = 16;
     int tile_size = 40;
     map<string, map<int, Texture2D>> prepare_textures(map<string, map<int, Texture2D>> textures, string name, Texture2D set_text)
@@ -204,12 +100,19 @@ public:
         Rectangle bounds = {0, 0, text_length, text_length};
         Image grass_text = LoadImageFromTexture(set_text);
         int text_num = (grass_text.height / text_length) * (grass_text.height / text_length);
+        cout << name << " " << text_num << "\n";
         for (int i = 0; i < text_num; i++)
         {
 
             Image gt_copy = ImageCopy(grass_text);
             Image *gt_pointer = &gt_copy;
-            ImageCrop(gt_pointer, bounds);
+
+            // not sure if i need this honestly
+            if (text_num > 1)
+            {
+                ImageCrop(gt_pointer, bounds);
+            }
+
             ImageResize(gt_pointer, tile_size, tile_size);
             textures[name][i] = LoadTextureFromImage(gt_copy);
             bounds.x += text_length;
@@ -237,76 +140,74 @@ public:
         {
             cout << "filed to load file";
         }
-
+        cout<<name;
         nlohmann::json map_data;
+
+        map_data.dump();
         map_data = nlohmann::json::parse(map_file);
 
-        tilenumber = map_data["tile_number"];
+         nlohmann::json specific_data=map_data[name];
+         specific_data.dump(4);
 
-        for (int i = 0; i < map_data["tile_number"]; i++)
+        for (auto const& tile_data : specific_data)
         {
-            if (map_data[to_string(i)][0] == "slime_spawner")
+            if (tile_data[0] == "slime_spawner")
             {
-                Rectangle pos = Rectangle{map_data[to_string(i)][2][0],
-                                          map_data[to_string(i)][2][1],
-                                          map_data[to_string(i)][2][3],
-                                          map_data[to_string(i)][2][2]};
+                
+                Rectangle pos = Rectangle{tile_data[2][0],
+                                          tile_data[2][1],
+                                          tile_data[2][3],
+                                          tile_data[2][2]};
                 spawner temp;
-                temp.spawn_type = map_data[to_string(i)][0];
-                temp.spawn_area = pos;
-                temp.spawn_rate = rand() % 100 + 1; // random spawn rate
-                temp.spawn_timer = 0;
-                spawners[i] = temp;
-            }
-            
-            else if (map_data[to_string(i)][0] == "weapon")
-            {
+                temp.prepare_spawner(tile_data[0], pos, (rand() % 100 + 1));
 
-                Rectangle pos = Rectangle{map_data[to_string(i)][2][0],
-                                          map_data[to_string(i)][2][1],
-                                          map_data[to_string(i)][2][3],
-                                          map_data[to_string(i)][2][2]};
+                spawners.push_back(temp);
             }
+
+          
             else
             {
 
                 try
                 {
-                   
-                    tiles[i];
-                    tiles[i].type = map_data[to_string(i)][0];
-                    tiles[i].variant = map_data[to_string(i)][1];
-                    tiles[i].position.x = map_data[to_string(i)][2][0];
-                    tiles[i].position.y = map_data[to_string(i)][2][1];
-                    tiles[i].position.height = map_data[to_string(i)][2][2];
-                    tiles[i].position.width = map_data[to_string(i)][2][3];
-                    tiles[i].ongrid = map_data[to_string(i)][2][4];
-                    tiles[i].used = true;
-                    tiles[i].texture = textures[tiles[i].type][tiles[i].variant];
-                  
 
+                    tile new_tile;
+                    new_tile.type = tile_data[0];
+                    new_tile.variant = tile_data[1];
+                    new_tile.position.x = tile_data[2][0];
+                    new_tile.position.y = tile_data[2][1];
+                    new_tile.position.height = tile_data[2][2];
+                    new_tile.position.width = tile_data[2][3];
+                    new_tile.ongrid = tile_data[2][4];
+                    new_tile.used = true;
+                    new_tile.texture = textures[new_tile.type][new_tile.variant];
+
+                    tiles.push_back(new_tile);
                 }
                 catch (exception e)
                 {
-                    cout << "blank tile" << i;
-                    tiles[i].used = false;
+                    cout << "blank tile : ghost tile present";
+                   
                 }
             }
         }
         map_file.close();
-      
+
+        /*
+
         for (int i = 0; i < tilenumber; i++)
         {
             if (tiles[i].used)
             {
                 copy_tiles[copy_tiles.size()] = tiles[i];
-               
+
             }
         }
         tilenumber = copy_tiles.size();
         tiles=copy_tiles;
         copy_tiles.clear();
-        cout<<tilenumber;
+        */
+        cout << tilenumber;
     }
 
     void save_file()
@@ -324,20 +225,31 @@ public:
             cout << "error opening file";
         }
         nlohmann::json map_data;
+        nlohmann::json data_array=nlohmann::json::array();
 
         for (int i = 0; i < tiles.size(); i++)
         {
             if (tiles[i].used)
             {
 
-                map_data[to_string(tilenumber)] = {tiles[i].type, tiles[i].variant, {tiles[i].position.x, tiles[i].position.y, tiles[i].position.height, tiles[i].position.width, tiles[i].ongrid}};
-                tilenumber++;
+                nlohmann::json tile_data = {
+                tiles[i].type,
+                tiles[i].variant,
+                {
+                    tiles[i].position.x,
+                    tiles[i].position.y,
+                    tiles[i].position.height,
+                    tiles[i].position.width,
+                    tiles[i].ongrid
+                }
+            };
+            data_array.push_back(tile_data);
             }
         }
-        map_data["tile_number"] = tilenumber;
-        map_data["map_name"] = name;
+          map_data[name] = data_array;
+       
 
-        maps << map_data.dump();
+        maps << map_data.dump(4);
         all_map << "\n" + name;
         all_map.close();
         maps.close();
@@ -371,7 +283,7 @@ public:
                         {
                             tile_left = true;
                         }
-                        if (grid_x_compare == grid_x + 1 & 7 && grid_y_compare == grid_y)
+                        if (grid_x_compare == grid_x + 1  && grid_y_compare == grid_y)
                         {
                             tile_right = true;
                         }
@@ -438,14 +350,14 @@ public:
 
     void drawmap()
     {
-        for (int i = 0; i < tilenumber; i++)
+        for (int i = 0; i < tiles.size(); i++)
         {
             if (tiles[i].ongrid == "true")
             {
                 DrawTexture(tiles[i].texture, tiles[i].position.x, tiles[i].position.y, RAYWHITE);
             }
         }
-        for (int i = 0; i < tilenumber; i++)
+        for (int i = 0; i < tiles.size(); i++)
         {
             if (tiles[i].ongrid == "false")
             {
@@ -453,7 +365,7 @@ public:
             }
         }
     }
-    int edit_map(string file_name, map<string, map<int, Texture2D>> textures)
+    void edit_map(string file_name, map<string, map<int, Texture2D>> textures)
     {
 
         fstream map_file;
@@ -468,33 +380,31 @@ public:
         nlohmann::json map_data;
         map_data = nlohmann::json::parse(map_file);
 
-        tilenumber = map_data["tile_number"];
-        for (int i = 0; i < map_data["tile_number"]; i++)
-        {
-            try
-                {
-                   
-                    tiles[i];
-                    tiles[i].type = map_data[to_string(i)][0];
-                    tiles[i].variant = map_data[to_string(i)][1];
-                    tiles[i].position.x = map_data[to_string(i)][2][0];
-                    tiles[i].position.y = map_data[to_string(i)][2][1];
-                    tiles[i].position.height = map_data[to_string(i)][2][2];
-                    tiles[i].position.width = map_data[to_string(i)][2][3];
-                    tiles[i].ongrid = map_data[to_string(i)][2][4];
-                    tiles[i].used = true;
-                    tiles[i].texture = textures[tiles[i].type][tiles[i].variant];
-                  
+       nlohmann::json specific_data=map_data[file_name];
 
-                }
-                catch (exception e)
-                {
-                    cout << "blank tile" << i;
-                    tiles[i].used = false;
-                }
+        for (auto const& tile_data : specific_data)
+            try
+            {
+                    tile new_tile;
+                    new_tile.type = tile_data[0];
+                    new_tile.variant = tile_data[1];
+                    new_tile.position.x = tile_data[2][0];
+                    new_tile.position.y = tile_data[2][1];
+                    new_tile.position.height = tile_data[2][2];
+                    new_tile.position.width = tile_data[2][3];
+                    new_tile.ongrid = tile_data[2][4];
+                    new_tile.used = true;
+                    new_tile.texture = textures[new_tile.type][new_tile.variant];
+
+                    tiles.push_back(new_tile);
+            }
+            catch (exception e)
+            {
+               //ghost tiles
+               cout<<"error missing tiles";
+            }
         }
-        return tilenumber-1;
-    }
+    
     int get_tile_size(tile tile_in[])
     {
         int num = 0;
@@ -548,118 +458,6 @@ public:
         }
 
         return j;
-    }
-};
-
-class State
-{
-public:
-    enum State_type
-    {
-        initiate,
-        active,
-        paused,
-        dead
-    };
-
-    enum State_type current;
-    void update_State()
-    {
-    }
-};
-class wander : public State
-{
-public:
-    int speed;
-    int max_grid;
-    Vector2 position;
-    Vector2 target;
-    void set_vals(int speed, int max_grid, Vector2 position)
-    {
-
-        this->position = position;
-        this->max_grid = max_grid;
-        this->speed = speed;
-        current = initiate;
-    }
-    void update_State()
-    {
-        if (current == initiate)
-        {
-            target.x = position.x + (rand() % max_grid) * t_size;
-            target.y = position.y + (rand() % max_grid) * t_size;
-            current = active;
-        }
-        if (current == active)
-        {
-            float dif_x = target.x - position.x;
-
-            float dif_y = target.y - position.y;
-
-            if (abs(dif_x) > 0.2 || abs(dif_y) > 0.2)
-            {
-                float move_x = 0;
-                float move_y = 0;
-
-                if (abs(dif_x) > abs(dif_y))
-                {
-                    move_x = sin(dif_x);
-                }
-                else if (abs(dif_x) < abs(dif_y))
-                {
-                    move_y = sin(dif_x);
-                }
-                else
-                {
-                    move_x = sin(dif_x);
-                    move_y = sin(dif_y);
-                }
-
-                position.x += move_x * speed;
-                position.y += move_y * speed;
-            }
-            else
-            {
-                current = initiate;
-            }
-        }
-    }
-};
-
-class entity : public physics_entity
-{
-public:
-    wander wander_State;
-
-    void initiate(int speed, int facing, Vector2 position, Vector2 dimensions, int max_wander_grid)
-    {
-        this->position = position;
-        this->dimensions = dimensions;
-        this->speed = speed;
-        this->facing = facing;
-        wander_State.set_vals(speed, max_wander_grid, position);
-        alive = true;
-    }
-    void act() override
-    {
-        wander_State.update_State();
-
-        if (alive)
-        {
-            position.x = wander_State.position.x;
-            position.y = wander_State.position.y;
-        }
-        wander_State.position = position;
-    }
-};
-
-class player_controller : public physics_entity
-{
-    void act()
-    {
-    }
-    player_controller()
-    {
     }
 };
 
@@ -742,9 +540,11 @@ public:
     }
 };
 class spawn_manager
-{   
+{
+
 public:
-nlohmann::json entity_data;
+    vector<mob> mobs;
+    nlohmann::json entity_data;
     spawn_manager()
     {
         try
@@ -756,47 +556,63 @@ nlohmann::json entity_data;
                 throw runtime_error("Failed to open mob.json");
             }
             entity_data = nlohmann::json::parse(entity_file);
+            cout << "entity data loaded" << "\n"
+                 << entity_data;
         }
         catch (const exception &e)
         {
             cout << "Error loading mob data: " << e.what() << endl;
         }
     }
-    void prepare_spawners(spawner* spawners)
+    spawner prepare_spawner(spawner spawners)
     {
-    //add logic to parse the json file with the mob data and assign that mob type to the spawner based on  the spawn_type
-    fstream entity_file;
+        // add additional mob types here
       
-        
-       
-     
-            if (spawners->spawn_type == "slime_spawner")
-            {
-                entity *temp = new entity();
-                temp->initiate(
-                    entity_data["slime"]["speed"],
-                    0
-                    ,{spawners->spawn_area.x+rand()%10,spawners->spawn_area.y+rand()%10}
-                    , Vector2{entity_data["slime"]["width"],entity_data["slime"]["height"]}
-                    , 10
-                );
-                spawners->set_spawn_object(temp);
-            }
-            else if (spawners->spawn_type == "skeleton_spawner")
-            {
-                world_object *temp = new world_object();
-                temp->name = "skeleton";
-                temp->health.set_base(150);
-                spawners->set_spawn_object(temp);
-            }
-            
+        if (spawners.spawn_type == "slime_spawner")
+        {
+            std::cout << "Condition met. Setting slime data." << std::endl;
+            spawners.set_spawnable_mob(entity_data["slime"]);
+        }
+        else
+        {
+            std::cout << "Condition failed for: " << spawners.spawn_type << std::endl;
         }
 
-      
-          
-    
-    
+        return spawners;
+    }
+    spawner update(spawner spawners, map<string, map<int, Texture2D>> textures)
+    {
+        spawners.spawn_timer += 1;
+        if (spawners.spawn_timer > spawners.spawn_interval)
+        {
+            mob temp;
 
+            Rectangle rec = {
+                             spawners.spawn_area.x, spawners.spawn_area.y,
+                             spawners.mob_data["basic"]["height"], spawners.mob_data["basic"]["width"],};
+
+            temp.set_self(rec, textures["slime"][spawners.mob_data["basic"]["texture"]], rec);
+
+            mobs.push_back (temp);
+            spawners.spawn_timer = 0;
+            cout << "spawned mob here";
+        }
+        return spawners;
+    }
+    void update_mobs()
+    {
+         for (int i = 0; i < mobs.size(); i++)
+        {
+         mobs[i].collider.x+=1;
+        }
+    }
+    void draw_mobs()
+    {
+        for (int i = 0; i < mobs.size(); i++)
+        {
+            DrawTexture(mobs[i].texture, mobs[i].collider.x, mobs[i].collider.y, RAYWHITE);
+        }
+    }
 };
 
 class world_manager
@@ -804,8 +620,8 @@ class world_manager
 public:
     mapset set;
     map<int, map<int, map<int, world_object *>>> object_locate;
-    spawn_manager spawn_manager;
-   
+    spawn_manager mob_manager;
+
     enum world_State
     {
         loading,
@@ -815,42 +631,63 @@ public:
 
     };
     enum world_State current_State;
-    static world_manager &getInstance()
-    {
-        static world_manager instance;
-        return instance;
-    }
-    void manage()
+
+    void manage(map<string, map<int, Texture2D>> textures)
     {
         switch (current_State)
         {
+
         case loading:
+            set.loadmap(textures, "test_map");
+            for (int i = 0; i < set.spawners.size(); i++)
+            {
+                set.spawners[i] = mob_manager.prepare_spawner(set.spawners[i]);
+            }
+            current_State = world_State::playing;
+            cout<<"'loading ......";
             break;
         case menu:
             break;
         case playing:
+             
+            for (int i = 0; i < set.spawners.size(); i++)
+            {
+                set.spawners[i] = mob_manager.update(set.spawners[i], textures);
+               
+            }
+            
+            set.drawmap();
+            mob_manager.update_mobs();
+            mob_manager.draw_mobs();
+
+
             break;
         case paused:
             break;
         }
+    }
 
-        update_object_locate();
+    /*    update_object_locate();
         for(int i=0;i<set.spawners.size();i++)
         {
             spawn_manager.prepare_spawners(&set.spawners[i]);
-        
+
+        }
+         for (int i = 0; i < set.spawners.size(); i++)
+        {
+            set.spawners[i].spawn();
         }
         for (int i = 0; i < set.spawners.size(); i++)
         {
             for(int j = 0; j < set.spawners[i].spawn_list.size(); j++)
             {
-                set.spawners[i].spawn();
+
                 set.spawners[i].spawn_list[j]->act();
                 set.spawners[i].spawn_list[j]->drawself();
             }
-        
+
         }
-      
+
         set.drawmap();
     }
 
@@ -874,6 +711,7 @@ public:
 
     }
     // add behaviour management and someform of renderer
+    */
 };
 class world_renderer
 {

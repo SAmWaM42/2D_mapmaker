@@ -12,20 +12,20 @@ using json = nlohmann::json;
 class game
 {
     map<string,map<int,Texture2D>> textures;
+    world_manager manager;
     public:
-    world_manager* manager=&world_manager::getInstance();
     void run()
     {
         InitWindow(screenwidth, screenheight, "Evolve");
         SetTargetFPS(60);
-        textures=manager->set.prepare_textures(textures, "grass", LoadTexture("assets/grass/grass.png"));
-         manager->set.loadmap(textures,"test_map");
+        textures=manager.set.prepare_textures(textures, "grass", LoadTexture("assets/grass/grass.png"));
+        textures=manager.set.prepare_textures(textures, "slime", LoadTexture("assets/mob/slime.png"));
+          manager.current_State=manager.loading;
         while (!WindowShouldClose())
         {
             BeginDrawing();
             ClearBackground(RAYWHITE);
-            manager->manage();
-            manager->set.drawmap();
+            manager.manage(textures);
             EndDrawing();
         }
         CloseWindow();

@@ -48,14 +48,13 @@ public:
        
         textures = mapset.prepare_textures(textures, "grass", grass);
         textures = mapset.prepare_textures(textures, "slime_spawner", slime_spawner);
-        textures=mapset.prepare_textures(textures, "slime", tree);
-        textures["tree"][0]=tree;
+        textures=mapset.prepare_textures(textures, "slime", slime);
+    
         string tile_name[textures.size()];
          cout<<textures.size();
         tile_name[0] = "grass";
-        tile_name[1] = "tree";
-        tile_name[2] = "slime_spawner";
-        tile_name[3] = "slime";
+        tile_name[1] = "slime_spawner";
+        tile_name[2] = "slime";
 
         Texture2D current_tile_img;
         int current_image = 0;
@@ -66,14 +65,16 @@ public:
         bool grid_on = false;
         int time;
 
+        tile temp_tile;
+
         SetTargetFPS(60);
         while (!WindowShouldClose())
         {
 
             current_tile_img = textures[tile_name[current_image]][variant];
-            mapset.tiles[current_tile].variant = variant;
-            mapset.tiles[current_tile].texture = current_tile_img;
-            mapset.tiles[current_tile].type = tile_name[current_image];
+            temp_tile.variant = variant;
+            temp_tile.texture = current_tile_img;
+            temp_tile.type = tile_name[current_image];
 
             if ((camera.camera.target.x - camera.camera.offset.x) < 0)
             {
@@ -91,15 +92,15 @@ public:
             {
                 
 
-                mapset.tiles[current_tile].position.width = current_tile_img.width;
-                mapset.tiles[current_tile].position.height = current_tile_img.height;
-                mapset.tiles[current_tile].used = true;
-                mapset.tiles[current_tile].ongrid = "true";
+               temp_tile.position.width = current_tile_img.width;
+               temp_tile.position.height = current_tile_img.height;
+               temp_tile.used = true;
+               temp_tile.ongrid = "true";
                 int x = (int)(GetScreenToWorld2D(GetMousePosition(), camera.camera).x / 40);
                 int y = (int)(GetScreenToWorld2D(GetMousePosition(), camera.camera).y / 40);
 
-                mapset.tiles[current_tile].position.x = grid[x][y].y;
-                mapset.tiles[current_tile].position.y = grid[x][y].x + 40 - mapset.tiles[current_tile].position.height;
+               temp_tile.position.x = grid[x][y].y;
+               temp_tile.position.y = grid[x][y].x + 40 -temp_tile.position.height;
                 bool layered = false;
                 bool same_tile=false;
                 if (current_tile > 0)
@@ -118,7 +119,7 @@ public:
                                     if (layered)
                                     {
 
-                                        mapset.tiles.erase(j);
+                                        mapset.tiles.erase(mapset.tiles.begin()+j);
                                         same_tile=true;
                                     }
                                 }
@@ -128,7 +129,9 @@ public:
                 }
                 if (!same_tile)
                 {
-                    current_tile = (current_tile + 1);
+                                   mapset.tiles.push_back(temp_tile);
+                                    current_tile++;
+
                 }
                 else
                 {
@@ -138,16 +141,18 @@ public:
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && mode_shift)
             {
 
-                mapset.tiles[current_tile].position.width = current_tile_img.width;
-                mapset.tiles[current_tile].position.height = current_tile_img.height;
-                mapset.tiles[current_tile].used = true;
-                mapset.tiles[current_tile].ongrid = "false";
+               temp_tile.position.width = current_tile_img.width;
+               temp_tile.position.height = current_tile_img.height;
+               temp_tile.used = true;
+               temp_tile.ongrid = "false";
                 int x = (int)(GetScreenToWorld2D(GetMousePosition(), camera.camera).x / 40);
                 int y = (int)(GetScreenToWorld2D(GetMousePosition(), camera.camera).y / 40);
 
-                mapset.tiles[current_tile].position.x = grid[x][y].y;
-                mapset.tiles[current_tile].position.y = grid[x][y].x + 40 - mapset.tiles[current_tile].position.height;
-                current_tile = (current_tile += 1);
+               temp_tile.position.x = grid[x][y].y;
+               temp_tile.position.y = grid[x][y].x + 40 -temp_tile.position.height;
+               mapset.tiles.push_back(temp_tile);
+               current_tile++;
+
                
             }
 
@@ -161,7 +166,9 @@ public:
                         if (CheckCollisionPointRec(GetScreenToWorld2D(GetMousePosition(), camera.camera), mapset.tiles[i].position))
                         {
 
-                            mapset.tiles.erase(i);
+                            mapset.tiles.erase((mapset.tiles.begin()+i));
+                             current_tile--;
+                            break;
                         }
                     }
                 }
@@ -178,18 +185,23 @@ public:
             if (IsKeyPressed(KEY_N) && tile_shift)
             {
                 // changing tile type
+                cout<<current_image<<"\n";
+                cout<<textures.size();
                 
 
-                current_image = (current_image + 1) % (textures.size() );
+                current_image = ((current_image + 1) % (textures.size()));
+               
+            
             }
             if (IsKeyPressed(KEY_N) && !tile_shift)
             {
                 // changing the variant of that specific tile type
+                 variant = ((variant + 1) % textures[tile_name[current_image]].size());
                 if(variant>=textures[tile_name[current_image]].size())
                 {
                     variant=0;
                 }
-                variant = (variant + 1) % textures[tile_name[current_image]].size();
+                
             }
             if (IsKeyPressed(KEY_O))
             {
@@ -222,7 +234,8 @@ public:
                 string name;
                 cout << "enter map name";
                 cin >> name;
-               current_tile=mapset.edit_map(name, textures);
+            mapset.edit_map(name, textures);
+                
             }
 
             BeginDrawing();
