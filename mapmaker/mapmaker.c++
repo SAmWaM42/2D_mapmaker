@@ -90,7 +90,7 @@ public:
 
             if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !mode_shift)
             {
-                
+         //grid placement
 
                temp_tile.position.width = current_tile_img.width;
                temp_tile.position.height = current_tile_img.height;
@@ -140,7 +140,7 @@ public:
             }
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && mode_shift)
             {
-
+              //offgrid placement
                temp_tile.position.width = current_tile_img.width;
                temp_tile.position.height = current_tile_img.height;
                temp_tile.used = true;
@@ -152,6 +152,7 @@ public:
                temp_tile.position.y = grid[x][y].x + 40 -temp_tile.position.height;
                mapset.tiles.push_back(temp_tile);
                current_tile++;
+               cout<<current_tile;
 
                
             }
@@ -215,7 +216,7 @@ public:
             if (IsKeyPressed(KEY_X))
             {
                 // primitive tile sorting on placement
-                mapset.autosort(textures, current_tile);
+                mapset.autosort(textures, mapset.tiles.size());
             }
             if (IsKeyPressed(KEY_R))
             {

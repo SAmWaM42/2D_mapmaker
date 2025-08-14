@@ -7,7 +7,7 @@ LIB = -L.  # -L$(RAYLIB_PATH)
 INCLUDE = -I.  # -I$(RAYLIB_PATH)
 LDFLAGS = -lraylib -lopengl32 -lgdi32 -lwinmm #-mwindows  // For no console
 
-SRC = *.c++# Directory to all source files
+SRC = *.c++ Classes/*h# Directory to all source files
 EXCLUDE = mapmaker.c++
 
 OUT = main  # Name of the output exe file
