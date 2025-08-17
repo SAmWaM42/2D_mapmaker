@@ -51,12 +51,23 @@ class world_object
 {
 public:
     Rectangle render_rec;
+    Vector2 prev_pos;
     Texture2D texture;
     Rectangle collider;
-    Vector2 force;
+   
     void act();
+    virtual ~world_object() = default;
 };
-class mob : public world_object
+class dynamic_object:public world_object
+{
+    public:
+    Vector2 force;
+};
+class static_object:public world_object
+{
+
+};
+class mob : public dynamic_object
 {
 public:
     int max_wander_box;
@@ -178,6 +189,24 @@ public:
 
     void move_cam();
 };
+
+class collision_detector{
+    int grid_size=t_size;
+    public:
+    map<int,map<int,vector<world_object*>>> entity_grid;
+    vector<pair<world_object*,world_object*>> potential_collisions;
+    void set_entity_grid(vector<world_object*> entities);
+    void update(world_object* object);
+    void check_adjacent(world_object* object);
+
+
+};
+class collision_manager
+{
+    public:
+    void resolve_collisions(vector<pair<world_object*,world_object*>> potential_collisions);
+
+};
 class spawn_manager
 {
 
@@ -197,17 +226,17 @@ public:
     void update_mobs(
         unordered_map<pair<int, int>,
                       bool, pair_hash>
-            grid);
+            grid,collision_detector* detect);
 
     void draw_mobs();
 };
-
 class world_manager
 {
 public:
     mapset set;
-    map<int, map<int, map<int, world_object *>>> object_locate;
     spawn_manager mob_manager;
+    collision_detector col_detector;
+    collision_manager col_manager;
     int zoom = 1;
     int rotation = 0;
 

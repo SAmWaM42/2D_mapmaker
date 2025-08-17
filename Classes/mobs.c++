@@ -98,13 +98,18 @@
             }
             break;
             case relocate:
+            {
                 force = move(destination);
+                prev_pos={collider.x,collider.y};
                 collider.x += force.x;
                 collider.y += force.y;
-                if (collider.x == destination.x && collider.y == destination.y)
+                double distance_x=pow((collider.x-destination.x),2);
+                double distance_y=pow((collider.y-destination.y),2);
+                if (distance_x < 5 && distance_y < 5)
                 {
                     current = wander_states::change;
                 }
+            }
                 break;
             case change:
                 current = wander_states::target;

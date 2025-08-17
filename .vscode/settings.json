@@ -34,6 +34,7 @@
         "sstream": "cpp",
         "streambuf": "cpp",
         "valarray": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "vector": "cpp"
     }
 }

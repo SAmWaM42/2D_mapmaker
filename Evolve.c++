@@ -1,21 +1,17 @@
 #ifndef Evolve
 #define Evolve
-
-#include "Classes/mapset.c++";
-#include "Classes/mobs.c++";
-#include "Classes/managers.c++";
-
-
-
-using namespace std;
 #define screenheight 720
 #define screenwidth 960
 #define RENDER_SCALE 2.0
+#include "Classes/mapset.c++";
+#include "Classes/mobs.c++";
+#include "Classes/managers.c++";
 using json = nlohmann::json;
 class game
 {
     map<string, map<int, Texture2D>> textures;
     world_manager manager;
+
 
 public:
     void run()
