@@ -64,8 +64,9 @@ spawner spawn_manager::update(spawner spawners, map<string, map<int, Texture2D>>
             rec, textures["slime"][spawners.mob_data["basic"]["texture"]],
             rec, spawners.mob_data["basic"]["observation"],
             (base_idle - (idle_modifier * speed)), speed);
-
+            temp.my_type=temp.dynamic_object;
         mobs.push_back(temp);
+
         spawners.spawn_timer = 0;
         spawners.mob_count++;
     }
@@ -77,10 +78,18 @@ void spawn_manager::update_mobs(unordered_map<pair<int, int>, bool, pair_hash> g
     // where all the actualization of the individual mob logic occurs
     for (int i = 0; i < mobs.size(); i++)
     {
-        mobs[i].act(grid);
-        detect->update(&mobs[i]);
-        detect->check_adjacent(&mobs[i]);
+         mobs[i].act(grid);
+         detect->update(&mobs[i]);
     }
+    cout<<"breaking after update"<<"\n";
+    for (int i = 0; i < mobs.size(); i++)
+    {
+      
+       detect->check_adjacent(&mobs[i]);
+    }
+    cout<<"breaking after ptential collidion detection"<<"\n";
+    
+
 }
 void spawn_manager::draw_mobs()
 {
@@ -174,19 +183,37 @@ void mod_cam::move_cam()
 }
 // collsion manager implementation
 
-void collision_detector::set_entity_grid(vector<world_object *> entities)
+void collision_detector::set_entity_grid(vector<world_object> entities)
 {
     for (auto &entity : entities)
     {
-        entity_grid[int(entity->collider.x / grid_size)][int(entity->collider.y / grid_size)].push_back(entity);
+        entity_grid[int(entity.collider.x / grid_size)][int(entity.collider.y / grid_size)].push_back(&entity);
     }
 }
 void collision_detector::update(world_object *entity)
 {
-    int prev_x = entity->prev_pos.x / grid_size;
+    int prev_x = (entity->prev_pos.x / grid_size);
     int prev_y = entity->prev_pos.y / grid_size;
     int x = entity->collider.x / grid_size;
     int y = entity->collider.y / grid_size;
+    if(prev_x<0)
+    {
+        prev_x=0;
+    }
+    if(prev_y<0)
+    {
+        prev_y=0;
+    }if(x<0)
+    {
+        x=0;
+    }
+    if(y<0)
+    {
+        y=0;
+    }
+
+
+
     if (x == prev_x && y == prev_y)
     {
         return;
@@ -194,7 +221,7 @@ void collision_detector::update(world_object *entity)
     auto &grid_cell = entity_grid[prev_x][prev_y];
 
     // Find the entity's position in the vector
-    for (size_t i = 0; i < grid_cell.size(); ++i)
+    for (int i = 0; i < grid_cell.size(); i++)
     {
         if (grid_cell[i] == entity)
         {
@@ -204,9 +231,13 @@ void collision_detector::update(world_object *entity)
             break;
         }
     }
-
+ 
+   
     // Add the entity to its new position
+
+        dynamic_obj* dyn_obj_first =dynamic_cast<dynamic_obj*>(entity);
     entity_grid[int(entity->collider.x / grid_size)][int(entity->collider.y / grid_size)].push_back(entity);
+    
 }
 void collision_detector::check_adjacent(world_object *entity)
 {
@@ -220,6 +251,7 @@ void collision_detector::check_adjacent(world_object *entity)
             {0, -1},
             {-1, -1},
             {-1, 0}};
+
     for (int i = 0; i < 8; i++)
     {
         int x = (entity->collider.x / grid_size) + checkable_positions[i].x;
@@ -227,55 +259,72 @@ void collision_detector::check_adjacent(world_object *entity)
         if (x < 0 || y < 0)
         {
         }
-
-        for (auto &obj : entity_grid[x][y])
+        else
         {
-            if (obj != entity)
+
+            for (auto &obj : entity_grid[x][y])
             {
-                pair<world_object *, world_object *> temp = {entity, obj};
-                potential_collisions.push_back(temp);
+                
+     
+                if (obj != entity && obj)
+                {      
+                  
+                    pair<world_object *, world_object *> temp = {entity, obj};
+                    potential_collisions.push_back(temp);
+                }
             }
         }
     }
 }
 void ::collision_manager::resolve_collisions(vector<pair<world_object *, world_object *>> potential_collisions)
 {
-    if (potential_collisions.size() == 0)
+    if (potential_collisions.size() == 0 || potential_collisions.empty())
     {
         return;
     }
+
     for (auto &entity_pair : potential_collisions)
     {
+
         // add checking for non rigid_body tiles
         if (CheckCollisionRecs(entity_pair.first->collider, entity_pair.second->collider))
         {
-            dynamic_object *dyn_obj_first = dynamic_cast<dynamic_object *>(entity_pair.first);
-            dynamic_object *dyn_obj_sec = dynamic_cast<dynamic_object *>(entity_pair.second);
-            std::cout << "Checking types in vector..." << std::endl;
-            if (dyn_obj_first && dyn_obj_sec)
-            {
-                std::cout << "Both objects are dynamic. Their force vectors are:" << std::endl;
-                std::cout << "First object force: (" << dyn_obj_first->force.x << ", " << dyn_obj_first->force.y << ")" << std::endl;
-                std::cout << "Second object force: (" << dyn_obj_sec->force.x << ", " << dyn_obj_sec->force.y << ")" << std::endl;
+               if(entity_pair.first->my_type==entity_pair.first->dynamic_object&&entity_pair.second->my_type==entity_pair.second->dynamic_object)
+             {  dynamic_obj* dyn_obj_first =dynamic_cast<dynamic_obj*>(entity_pair.first);
+                 dynamic_obj* dyn_obj_sec = dynamic_cast<dynamic_obj*>(entity_pair.second);
 
-                // decide whether i should generate a force or just move the objects
-                float x = dyn_obj_first->force.x;
-                float y = dyn_obj_first->force.y;
-                int displacement = 20;
-                dyn_obj_first->collider.x += (-displacement * x);
-                dyn_obj_first->collider.y += (-displacement * y);
-                x = dyn_obj_sec->force.x;
-                y = dyn_obj_sec->force.y;
+                if (dyn_obj_first && dyn_obj_sec)
+                {
 
-                dyn_obj_sec->collider.x += (-displacement * x);
-                dyn_obj_sec->collider.y += (-displacement * y);
-            }
-            else
-            {
-                std::cout << "One of the objects is not dynamic." << std::endl;
-            }
+                    // decide whether i should generate a force or just move the objects
+                    float x = dyn_obj_first->force.x;
+                    float y = dyn_obj_first->force.y;
+                    int displacement = 20;
+                    dyn_obj_first->collider.x += (-displacement * x);
+                    dyn_obj_first->collider.y += (-displacement * y);
+                  
+                    cout<<endl;
+                    mob* derived_ptr = static_cast<mob*>(dyn_obj_first);
+                    derived_ptr->current_state=derived_ptr->idle;
+                    
+                    float x_sec = dyn_obj_sec->force.x;
+                    float y_sec = dyn_obj_sec->force.y;
+
+                    dyn_obj_sec->collider.x += (-displacement * x_sec);
+                    dyn_obj_sec->collider.y += (-displacement * y_sec);
+                   
+                  mob* derived_ptr_sec = static_cast<mob*>(dyn_obj_sec);
+                    derived_ptr_sec->current_state=derived_ptr_sec->idle;
+                }
+                else
+                {
+                    std::cout << "One of the objects is not dynamic." << std::endl;
+                }
+            
         }
     }
+}
+    
 }
 
 // world manager implementation
@@ -305,9 +354,10 @@ void world_manager::manage(map<string, map<int, Texture2D>> textures)
 
             set.spawners[i] = mob_manager.update(set.spawners[i], textures);
         }
+
         mob_manager.update_mobs(set.tile_grid, &col_detector);
 
-        col_manager.resolve_collisions(col_detector.potential_collisions);
+       col_manager.resolve_collisions(col_detector.potential_collisions);
         col_detector.potential_collisions.clear();
 
         cam.move_cam();

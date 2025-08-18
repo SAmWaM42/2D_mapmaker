@@ -2,12 +2,13 @@
 #define root_classes
 #include "raylib.h"
 #include <math.h>
-#include "iostream"
+#include <iostream>
 #include <fstream>
 #include <algorithm>
 #include <filesystem>
 #include <iostream>
 #include <map>
+#include <list>
 #include "json.hpp"
 using namespace std;
 #define screenheight 720
@@ -54,20 +55,31 @@ public:
     Vector2 prev_pos;
     Texture2D texture;
     Rectangle collider;
-   
+    
+    enum obj_type{
+        static_object ,
+        dynamic_object
+    };
+    obj_type my_type;
+
+
     void act();
     virtual ~world_object() = default;
 };
-class dynamic_object:public world_object
+class dynamic_obj:public world_object
 {
     public:
     Vector2 force;
+
 };
-class static_object:public world_object
+class static_obj:public world_object
+
 {
 
 };
-class mob : public dynamic_object
+
+
+class mob : public dynamic_obj
 {
 public:
     int max_wander_box;
@@ -195,7 +207,7 @@ class collision_detector{
     public:
     map<int,map<int,vector<world_object*>>> entity_grid;
     vector<pair<world_object*,world_object*>> potential_collisions;
-    void set_entity_grid(vector<world_object*> entities);
+    void set_entity_grid(vector<world_object> entities);
     void update(world_object* object);
     void check_adjacent(world_object* object);
 
@@ -211,7 +223,7 @@ class spawn_manager
 {
 
 public:
-    vector<mob> mobs;
+    vector<std::unique_ptr<mob>> mobs;
     int base_idle = 500;
     int idle_modifier = 75;
     nlohmann::json entity_data;
