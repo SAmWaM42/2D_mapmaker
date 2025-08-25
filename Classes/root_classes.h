@@ -56,12 +56,13 @@ public:
     Texture2D texture;
     Rectangle collider;
     
+    //to be removed if has no use later
     enum obj_type{
         static_object ,
         dynamic_object
     };
     obj_type my_type;
-
+   
 
     void act();
     virtual ~world_object() = default;
@@ -69,7 +70,7 @@ public:
 class dynamic_obj:public world_object
 {
     public:
-    Vector2 force;
+     Vector2 force;
 
 };
 class static_obj:public world_object

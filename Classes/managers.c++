@@ -50,7 +50,7 @@ spawner spawn_manager::update(spawner spawners, map<string, map<int, Texture2D>>
     spawners.spawn_timer += 1;
     if (spawners.spawn_timer > spawners.spawn_interval)
     {
-        mob temp;
+        auto temp=make_unique<mob>();
 
         Rectangle rec = {
             spawners.spawn_area.x,
@@ -60,12 +60,14 @@ spawner spawn_manager::update(spawner spawners, map<string, map<int, Texture2D>>
         };
 
         float speed = spawners.mob_data["basic"]["speed"];
-        temp.set_self(
+        temp->set_self(
             rec, textures["slime"][spawners.mob_data["basic"]["texture"]],
             rec, spawners.mob_data["basic"]["observation"],
             (base_idle - (idle_modifier * speed)), speed);
-            temp.my_type=temp.dynamic_object;
-        mobs.push_back(temp);
+
+            temp->my_type=temp->dynamic_object;
+            
+           mobs.push_back(std::move(temp));
 
         spawners.spawn_timer = 0;
         spawners.mob_count++;
@@ -78,14 +80,14 @@ void spawn_manager::update_mobs(unordered_map<pair<int, int>, bool, pair_hash> g
     // where all the actualization of the individual mob logic occurs
     for (int i = 0; i < mobs.size(); i++)
     {
-         mobs[i].act(grid);
-         detect->update(&mobs[i]);
+         mobs[i]->act(grid);
+         detect->update(mobs[i].get());
     }
     cout<<"breaking after update"<<"\n";
     for (int i = 0; i < mobs.size(); i++)
     {
       
-       detect->check_adjacent(&mobs[i]);
+       detect->check_adjacent(mobs[i].get());
     }
     cout<<"breaking after ptential collidion detection"<<"\n";
     
@@ -96,7 +98,7 @@ void spawn_manager::draw_mobs()
     for (int i = 0; i < mobs.size(); i++)
     {
 
-        DrawTexture(mobs[i].texture, mobs[i].collider.x, mobs[i].collider.y, RAYWHITE);
+        DrawTexture(mobs[i]->texture, mobs[i]->collider.x, mobs[i]->collider.y, RAYWHITE);
     }
 }
 // camera manager implementation
@@ -290,8 +292,11 @@ void ::collision_manager::resolve_collisions(vector<pair<world_object *, world_o
         if (CheckCollisionRecs(entity_pair.first->collider, entity_pair.second->collider))
         {
                if(entity_pair.first->my_type==entity_pair.first->dynamic_object&&entity_pair.second->my_type==entity_pair.second->dynamic_object)
-             {  dynamic_obj* dyn_obj_first =dynamic_cast<dynamic_obj*>(entity_pair.first);
-                 dynamic_obj* dyn_obj_sec = dynamic_cast<dynamic_obj*>(entity_pair.second);
+             {
+                 dynamic_obj* dyn_obj_first =dynamic_cast<dynamic_obj*>(entity_pair.first);
+                dynamic_obj* dyn_obj_sec = dynamic_cast<dynamic_obj*>(entity_pair.second);
+              
+
 
                 if (dyn_obj_first && dyn_obj_sec)
                 {
@@ -313,7 +318,7 @@ void ::collision_manager::resolve_collisions(vector<pair<world_object *, world_o
                     dyn_obj_sec->collider.x += (-displacement * x_sec);
                     dyn_obj_sec->collider.y += (-displacement * y_sec);
                    
-                  mob* derived_ptr_sec = static_cast<mob*>(dyn_obj_sec);
+                    mob* derived_ptr_sec = static_cast<mob*>(dyn_obj_sec);
                     derived_ptr_sec->current_state=derived_ptr_sec->idle;
                 }
                 else
@@ -343,6 +348,7 @@ void world_manager::manage(map<string, map<int, Texture2D>> textures)
         }
 
         current_State = world_State::playing;
+        mob_manager.mobs.reserve(1000);
         cout << "finished loading";
         break;
     case menu:

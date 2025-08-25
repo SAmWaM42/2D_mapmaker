@@ -51,7 +51,7 @@
              {-0.5, -0.5},
              {-1, 0}};
         map<int, float> score;
-        for (int j = 0; j < 7; j++)
+        for (int j = 0; j < 8; j++)
         {
             float test_dis_x = collider.x + directions[j].x;
             float test_dis_y = collider.y + directions[j].y;
