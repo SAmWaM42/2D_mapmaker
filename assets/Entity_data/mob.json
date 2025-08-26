@@ -8,7 +8,8 @@
     "height":30,
     "speed":1.5,
     "observation":6,
-    "health": 100 
+    "health": 100, 
+    "typeId":0
  },
  "elite" : {
     "texture": 1,
@@ -16,7 +17,9 @@
     "height":45,
     "speed":1.0,
     "health": 200 ,
-     "observation":6
+     "observation":6,
+     "typeId":1
+
  },
  "spawner_preset":
  {

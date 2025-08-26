@@ -39,6 +39,12 @@ spawner spawn_manager::prepare_spawner(spawner spawners)
 
     return spawners;
 }
+void spawn_manager::despawn(std::unique_ptr<mob> &deadMob, int index)
+{
+    std::unique_ptr<mob> deadMob = std::move(deadMob);
+    mobs.erase(mobs.begin() + index);
+    dead_pool[deadMob->typeId].push_back(move(deadMob));
+}
 spawner spawn_manager::update(spawner spawners, map<string, map<int, Texture2D>> textures)
 {
     if (spawners.mob_count >= spawners.max_mob_count)
@@ -46,11 +52,16 @@ spawner spawn_manager::update(spawner spawners, map<string, map<int, Texture2D>>
 
         return spawners;
     }
-
     spawners.spawn_timer += 1;
     if (spawners.spawn_timer > spawners.spawn_interval)
     {
-        auto temp=make_unique<mob>();
+        if (!dead_pool[spawners.mob_data["basic"]["typeId"]].empty())
+        {
+            auto temp = move(dead_pool[spawners.mob_data["basic"]["typeId"]].back());
+            dead_pool[spawners.mob_data["basic"]["typeId"]].pop_back();
+            mobs.push_back(std::move(temp));
+        }
+        auto temp = make_unique<mob>();
 
         Rectangle rec = {
             spawners.spawn_area.x,
@@ -64,10 +75,11 @@ spawner spawn_manager::update(spawner spawners, map<string, map<int, Texture2D>>
             rec, textures["slime"][spawners.mob_data["basic"]["texture"]],
             rec, spawners.mob_data["basic"]["observation"],
             (base_idle - (idle_modifier * speed)), speed);
+        temp->typeId = spawners.mob_data["basic"]["typeId"],
 
-            temp->my_type=temp->dynamic_object;
-            
-           mobs.push_back(std::move(temp));
+    
+
+        mobs.push_back(std::move(temp));
 
         spawners.spawn_timer = 0;
         spawners.mob_count++;
@@ -80,18 +92,16 @@ void spawn_manager::update_mobs(unordered_map<pair<int, int>, bool, pair_hash> g
     // where all the actualization of the individual mob logic occurs
     for (int i = 0; i < mobs.size(); i++)
     {
-         mobs[i]->act(grid);
-         detect->update(mobs[i].get());
+        mobs[i]->act(grid);
+        detect->update(mobs[i].get());
     }
-    cout<<"breaking after update"<<"\n";
+    cout << "breaking after update" << "\n";
     for (int i = 0; i < mobs.size(); i++)
     {
-      
-       detect->check_adjacent(mobs[i].get());
-    }
-    cout<<"breaking after ptential collidion detection"<<"\n";
-    
 
+        detect->check_adjacent(mobs[i].get());
+    }
+    cout << "breaking after ptential collidion detection" << "\n";
 }
 void spawn_manager::draw_mobs()
 {
@@ -198,23 +208,22 @@ void collision_detector::update(world_object *entity)
     int prev_y = entity->prev_pos.y / grid_size;
     int x = entity->collider.x / grid_size;
     int y = entity->collider.y / grid_size;
-    if(prev_x<0)
+    if (prev_x < 0)
     {
-        prev_x=0;
+        prev_x = 0;
     }
-    if(prev_y<0)
+    if (prev_y < 0)
     {
-        prev_y=0;
-    }if(x<0)
-    {
-        x=0;
+        prev_y = 0;
     }
-    if(y<0)
+    if (x < 0)
     {
-        y=0;
+        x = 0;
     }
-
-
+    if (y < 0)
+    {
+        y = 0;
+    }
 
     if (x == prev_x && y == prev_y)
     {
@@ -233,13 +242,11 @@ void collision_detector::update(world_object *entity)
             break;
         }
     }
- 
-   
+
     // Add the entity to its new position
 
-        dynamic_obj* dyn_obj_first =dynamic_cast<dynamic_obj*>(entity);
+    dynamic_obj *dyn_obj_first = dynamic_cast<dynamic_obj *>(entity);
     entity_grid[int(entity->collider.x / grid_size)][int(entity->collider.y / grid_size)].push_back(entity);
-    
 }
 void collision_detector::check_adjacent(world_object *entity)
 {
@@ -266,11 +273,10 @@ void collision_detector::check_adjacent(world_object *entity)
 
             for (auto &obj : entity_grid[x][y])
             {
-                
-     
+
                 if (obj != entity && obj)
-                {      
-                  
+                {
+
                     pair<world_object *, world_object *> temp = {entity, obj};
                     potential_collisions.push_back(temp);
                 }
@@ -288,15 +294,12 @@ void ::collision_manager::resolve_collisions(vector<pair<world_object *, world_o
     for (auto &entity_pair : potential_collisions)
     {
 
-        // add checking for non rigid_body tiles
+    
         if (CheckCollisionRecs(entity_pair.first->collider, entity_pair.second->collider))
         {
-               if(entity_pair.first->my_type==entity_pair.first->dynamic_object&&entity_pair.second->my_type==entity_pair.second->dynamic_object)
-             {
-                 dynamic_obj* dyn_obj_first =dynamic_cast<dynamic_obj*>(entity_pair.first);
-                dynamic_obj* dyn_obj_sec = dynamic_cast<dynamic_obj*>(entity_pair.second);
-              
-
+        
+                dynamic_obj *dyn_obj_first = dynamic_cast<dynamic_obj *>(entity_pair.first);
+                dynamic_obj *dyn_obj_sec = dynamic_cast<dynamic_obj *>(entity_pair.second);
 
                 if (dyn_obj_first && dyn_obj_sec)
                 {
@@ -307,19 +310,19 @@ void ::collision_manager::resolve_collisions(vector<pair<world_object *, world_o
                     int displacement = 20;
                     dyn_obj_first->collider.x += (-displacement * x);
                     dyn_obj_first->collider.y += (-displacement * y);
-                  
-                    cout<<endl;
-                    mob* derived_ptr = static_cast<mob*>(dyn_obj_first);
-                    derived_ptr->current_state=derived_ptr->idle;
-                    
+
+                    cout << endl;
+                    mob *derived_ptr = static_cast<mob *>(dyn_obj_first);
+                    derived_ptr->current_state = derived_ptr->idle;
+
                     float x_sec = dyn_obj_sec->force.x;
                     float y_sec = dyn_obj_sec->force.y;
 
                     dyn_obj_sec->collider.x += (-displacement * x_sec);
                     dyn_obj_sec->collider.y += (-displacement * y_sec);
-                   
-                    mob* derived_ptr_sec = static_cast<mob*>(dyn_obj_sec);
-                    derived_ptr_sec->current_state=derived_ptr_sec->idle;
+
+                    mob *derived_ptr_sec = static_cast<mob *>(dyn_obj_sec);
+                    derived_ptr_sec->current_state = derived_ptr_sec->idle;
                 }
                 else
                 {
@@ -328,8 +331,6 @@ void ::collision_manager::resolve_collisions(vector<pair<world_object *, world_o
             
         }
     }
-}
-    
 }
 
 // world manager implementation
@@ -363,7 +364,7 @@ void world_manager::manage(map<string, map<int, Texture2D>> textures)
 
         mob_manager.update_mobs(set.tile_grid, &col_detector);
 
-       col_manager.resolve_collisions(col_detector.potential_collisions);
+        col_manager.resolve_collisions(col_detector.potential_collisions);
         col_detector.potential_collisions.clear();
 
         cam.move_cam();

@@ -56,12 +56,8 @@ public:
     Texture2D texture;
     Rectangle collider;
     
-    //to be removed if has no use later
-    enum obj_type{
-        static_object ,
-        dynamic_object
-    };
-    obj_type my_type;
+   
+   
    
 
     void act();
@@ -78,7 +74,30 @@ class static_obj:public world_object
 {
 
 };
+class obj_collider:public world_object
+{
+    public:
+    float duration;
+    float lifetime;
 
+    
+};
+class hitbox:public obj_collider
+{
+   
+    public:
+   float damage;
+     void attack();
+
+};
+class hurtbox:public obj_collider
+{
+   
+    public:
+   float health;
+   void take_damage();
+
+};
 
 class mob : public dynamic_obj
 {
@@ -88,6 +107,7 @@ public:
     int max_idle_time;
     float speed;
     Vector2 destination;
+    string typeId;
 
     enum states
     {
@@ -225,6 +245,8 @@ class spawn_manager
 
 public:
     vector<std::unique_ptr<mob>> mobs;
+    map<string,vector<std::unique_ptr<mob>>> dead_pool;
+
     int base_idle = 500;
     int idle_modifier = 75;
     nlohmann::json entity_data;
@@ -240,6 +262,7 @@ public:
         unordered_map<pair<int, int>,
                       bool, pair_hash>
             grid,collision_detector* detect);
+    void despawn(std::unique_ptr<mob>& deadMob,int index);
 
     void draw_mobs();
 };
