@@ -134,3 +134,18 @@
             break;
         }
     }
+
+void hitbox::time_out(float count)
+{
+    lifetime_timer+=count;
+    if(lifetime_timer>=lifetime)
+    {
+       active=false;
+       
+    }
+}
+void hurtbox::take_damage(float damage_value)
+{
+      this->durability-=damage_value;
+
+}

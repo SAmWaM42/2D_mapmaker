@@ -1,0 +1,10 @@
+{
+    "bash":
+    {
+        "type":"melee",
+        "distance":0,
+         "AOE":{"width":10,"height":20}
+    }
+    
+
+}

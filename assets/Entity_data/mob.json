@@ -9,7 +9,9 @@
     "speed":1.5,
     "observation":6,
     "health": 100, 
-    "typeId":0
+    "typeId":0,
+     "attacks":
+     ["bash"]  
  },
  "elite" : {
     "texture": 1,

@@ -77,8 +77,8 @@ class static_obj:public world_object
 class obj_collider:public world_object
 {
     public:
-    float duration;
-    float lifetime;
+    bool active;
+    world_object* owner;
 
     
 };
@@ -87,15 +87,18 @@ class hitbox:public obj_collider
    
     public:
    float damage;
-     void attack();
+   float lifetime;
+   float lifetime_timer;
+   
+   void time_out(float count);
 
 };
 class hurtbox:public obj_collider
 {
    
     public:
-   float health;
-   void take_damage();
+   float durability;
+   void take_damage(float damage_value);
 
 };
 
@@ -108,6 +111,8 @@ public:
     float speed;
     Vector2 destination;
     string typeId;
+    hurtbox damage_collider;
+    vector<hurtbox> attacks;
 
     enum states
     {
@@ -151,11 +156,13 @@ public:
     float spawn_interval;
     float spawn_timer;
     nlohmann::json mob_data;
+    
     int mob_count;
     int max_mob_count;
 
     void prepare_spawner(string spawn_type, Rectangle spawn_area, float spawn_interval);
     void set_spawnable_mob(nlohmann::json mob_data);
+    
    
 };
 
@@ -240,6 +247,19 @@ class collision_manager
     void resolve_collisions(vector<pair<world_object*,world_object*>> potential_collisions);
 
 };
+class collider_manager
+{ 
+    nlohmann::json attack_data;
+    vector<unique_ptr<hitbox>>hitboxes;
+    map<int,map<int,vector<hitbox>>> hit_grid;
+     map<int,map<int,vector<world_object*>>> hurt_grid;
+    void prepare_self();
+    void spawn_collider(string attack,world_object* attacker);
+    void manage_hits();
+    void update(map<int,map<int,vector<world_object*>>> hurt_grid,float world_timer);
+    void render_hitboxes();
+
+};
 class spawn_manager
 {
 
@@ -273,6 +293,7 @@ public:
     spawn_manager mob_manager;
     collision_detector col_detector;
     collision_manager col_manager;
+    
     int zoom = 1;
     int rotation = 0;
 
@@ -294,6 +315,7 @@ public:
         map<string,
             map<int, Texture2D>>
             textures);
+    
 };
 class world_renderer
 {

@@ -76,9 +76,6 @@ spawner spawn_manager::update(spawner spawners, map<string, map<int, Texture2D>>
             rec, spawners.mob_data["basic"]["observation"],
             (base_idle - (idle_modifier * speed)), speed);
         temp->typeId = spawners.mob_data["basic"]["typeId"],
-
-    
-
         mobs.push_back(std::move(temp));
 
         spawners.spawn_timer = 0;
@@ -294,54 +291,85 @@ void ::collision_manager::resolve_collisions(vector<pair<world_object *, world_o
     for (auto &entity_pair : potential_collisions)
     {
 
-    
         if (CheckCollisionRecs(entity_pair.first->collider, entity_pair.second->collider))
         {
-        
-                dynamic_obj *dyn_obj_first = dynamic_cast<dynamic_obj *>(entity_pair.first);
-                dynamic_obj *dyn_obj_sec = dynamic_cast<dynamic_obj *>(entity_pair.second);
 
-                if (dyn_obj_first && dyn_obj_sec)
-                {
+            dynamic_obj *dyn_obj_first = dynamic_cast<dynamic_obj *>(entity_pair.first);
+            dynamic_obj *dyn_obj_sec = dynamic_cast<dynamic_obj *>(entity_pair.second);
 
-                    // decide whether i should generate a force or just move the objects
-                    float x = dyn_obj_first->force.x;
-                    float y = dyn_obj_first->force.y;
-                    int displacement = 20;
-                    dyn_obj_first->collider.x += (-displacement * x);
-                    dyn_obj_first->collider.y += (-displacement * y);
+            if (dyn_obj_first && dyn_obj_sec)
+            {
 
-                    cout << endl;
-                    mob *derived_ptr = static_cast<mob *>(dyn_obj_first);
-                    derived_ptr->current_state = derived_ptr->idle;
+                // decide whether i should generate a force or just move the objects
+                float x = dyn_obj_first->force.x;
+                float y = dyn_obj_first->force.y;
+                int displacement = 20;
+                dyn_obj_first->collider.x += (-displacement * x);
+                dyn_obj_first->collider.y += (-displacement * y);
 
-                    float x_sec = dyn_obj_sec->force.x;
-                    float y_sec = dyn_obj_sec->force.y;
+                cout << endl;
+                mob *derived_ptr = static_cast<mob *>(dyn_obj_first);
+                derived_ptr->current_state = derived_ptr->idle;
 
-                    dyn_obj_sec->collider.x += (-displacement * x_sec);
-                    dyn_obj_sec->collider.y += (-displacement * y_sec);
+                float x_sec = dyn_obj_sec->force.x;
+                float y_sec = dyn_obj_sec->force.y;
 
-                    mob *derived_ptr_sec = static_cast<mob *>(dyn_obj_sec);
-                    derived_ptr_sec->current_state = derived_ptr_sec->idle;
-                }
-                else
-                {
-                    std::cout << "One of the objects is not dynamic." << std::endl;
-                }
-            
+                dyn_obj_sec->collider.x += (-displacement * x_sec);
+                dyn_obj_sec->collider.y += (-displacement * y_sec);
+
+                mob *derived_ptr_sec = static_cast<mob *>(dyn_obj_sec);
+                derived_ptr_sec->current_state = derived_ptr_sec->idle;
+            }
+            else
+            {
+                std::cout << "One of the objects is not dynamic." << std::endl;
+            }
         }
     }
 }
 
 // world manager implementation
+void collider_manager::prepare_self()
+{
+    fstream entity_file;
+    entity_file.open("assets/Entity_data/attacks.json", ios::in);
+    if (!entity_file.is_open())
+    {
+        throw runtime_error("Failed to open attacks.json");
+    }
+    attack_data = nlohmann::json::parse(entity_file);
+    cout << "attack data loaded" << "\n"
+         << attack_data;
+}
+
+void collider_manager::update(map<int,map<int,vector<world_object*>>> hurt_grid,float world_timer)
+{
+   this->hurt_grid=hurt_grid;
+   for(auto &obj:hitboxes)
+   {
+    obj->lifetime_timer++;
+    if(obj->lifetime_timer>=obj->lifetime)
+    {
+        obj.reset();
+    }
+   }
+}
+void collider_manager::spawn_collider(string attack,world_object* attacker)
+{
+    float attack_distance=attack_data["attack"]["distance"];
+    //
+
+
+}
 
 void world_manager::manage(map<string, map<int, Texture2D>> textures)
 {
     switch (current_State)
     {
-
     case loading:
+    {
         cout << "'loading ......" << "\n";
+
         set.loadmap(textures, "test_map");
         for (int i = 0; i < set.spawners.size(); i++)
         {
@@ -349,9 +377,10 @@ void world_manager::manage(map<string, map<int, Texture2D>> textures)
         }
 
         current_State = world_State::playing;
-        mob_manager.mobs.reserve(1000);
+        // mob_manager.mobs.reserve(1000);
         cout << "finished loading";
-        break;
+    }
+    break;
     case menu:
         break;
     case playing:
