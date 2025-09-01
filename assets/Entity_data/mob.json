@@ -7,6 +7,7 @@
     "width":30,
     "height":30,
     "speed":1.5,
+    "damage_collider_offset":2.5,
     "observation":6,
     "health": 100, 
     "typeId":0,

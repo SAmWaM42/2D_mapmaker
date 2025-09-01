@@ -34,8 +34,9 @@
     }
     void mob:: act(unordered_map<pair<int, int>, bool, pair_hash> grid)
     {
-
         move_state_machine(grid);
+        damage_collider.collider.x=collider.x+collider_offset;
+        damage_collider.collider.y=collider.y+collider_offset;
     }
     void mob:: drawself()
     {
@@ -113,7 +114,7 @@
                 break;
             case change:
                 current = wander_states::target;
-                current_state = states::idle;
+                current_state = states::attack;
 
                 break;
             }
@@ -131,6 +132,9 @@
         case track:
             break;
         case attack:
+             
+            //add logic to trigger the attack that spawns the collider
+
             break;
         }
     }

@@ -114,6 +114,7 @@ public:
     string typeId;
     hurtbox damage_collider;
     vector<hurtbox> attacks;
+    float collider_offset;
 
     enum states
     {
@@ -250,9 +251,9 @@ class collision_manager
 };
 class collider_manager
 { 
+    public:
     nlohmann::json attack_data;
     vector<unique_ptr<hitbox>>hitboxes;
-   
      map<int,map<int,vector<world_object*>>> hurt_grid;
     void prepare_self();
     void spawn_collider(string attack,world_object* attacker);
@@ -282,7 +283,7 @@ public:
     void update_mobs(
         unordered_map<pair<int, int>,
                       bool, pair_hash>
-            grid,collision_detector* detect);
+            grid,collision_detector* detect,collider_manager* box_manager);
     void despawn(std::unique_ptr<mob>& deadMob,int index);
 
     void draw_mobs();
@@ -294,6 +295,8 @@ public:
     spawn_manager mob_manager;
     collision_detector col_detector;
     collision_manager col_manager;
+    collider_manager box_manager;
+    float world_timer=0;
     
     int zoom = 1;
     int rotation = 0;
@@ -317,6 +320,7 @@ public:
             map<int, Texture2D>>
             textures);
     
+    void progress_time();
 };
 class world_renderer
 {

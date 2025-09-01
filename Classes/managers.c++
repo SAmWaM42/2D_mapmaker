@@ -41,7 +41,6 @@ spawner spawn_manager::prepare_spawner(spawner spawners)
 }
 void spawn_manager::despawn(std::unique_ptr<mob> &deadMob, int index)
 {
-    std::unique_ptr<mob> deadMob = std::move(deadMob);
     mobs.erase(mobs.begin() + index);
     dead_pool[deadMob->typeId].push_back(move(deadMob));
 }
@@ -76,6 +75,9 @@ spawner spawn_manager::update(spawner spawners, map<string, map<int, Texture2D>>
             rec, spawners.mob_data["basic"]["observation"],
             (base_idle - (idle_modifier * speed)), speed);
         temp->typeId = spawners.mob_data["basic"]["typeId"],
+        temp->collider_offset=spawners.mob_data["basic"]["damage_collider_offset"],
+        temp->damage_collider.collider.height-= temp->collider_offset;
+        temp->damage_collider.collider.width-= temp->collider_offset;
         mobs.push_back(std::move(temp));
 
         spawners.spawn_timer = 0;
@@ -84,12 +86,13 @@ spawner spawn_manager::update(spawner spawners, map<string, map<int, Texture2D>>
 
     return spawners;
 }
-void spawn_manager::update_mobs(unordered_map<pair<int, int>, bool, pair_hash> grid, collision_detector *detect)
+void spawn_manager::update_mobs(unordered_map<pair<int, int>, bool, pair_hash> grid, collision_detector *detect,collider_manager* box_manager)
 {
     // where all the actualization of the individual mob logic occurs
     for (int i = 0; i < mobs.size(); i++)
     {
         mobs[i]->act(grid);
+        
         detect->update(mobs[i].get());
     }
     cout << "breaking after update" << "\n";
@@ -394,6 +397,8 @@ void collider_manager::spawn_collider(string attack,world_object* attacker)
     temp->owner=attacker;
     temp->active=true;
     temp->name=attack;
+    temp->lifetime= attack_data[attack]["lifetime"];
+    temp->lifetime_timer=0;
     hitboxes.push_back(move(temp));
 }
 void collider_manager::manage_hits(hitbox* obj)
@@ -424,7 +429,10 @@ void collider_manager::manage_hits(hitbox* obj)
     }
    
 }
-
+void world_manager::progress_time()
+{
+    world_timer+=0.1;
+}
 void world_manager::manage(map<string, map<int, Texture2D>> textures)
 {
     switch (current_State)
@@ -438,7 +446,7 @@ void world_manager::manage(map<string, map<int, Texture2D>> textures)
         {
             set.spawners[i] = mob_manager.prepare_spawner(set.spawners[i]);
         }
-
+         box_manager.prepare_self();
         current_State = world_State::playing;
         // mob_manager.mobs.reserve(1000);
         cout << "finished loading";
@@ -454,9 +462,10 @@ void world_manager::manage(map<string, map<int, Texture2D>> textures)
             set.spawners[i] = mob_manager.update(set.spawners[i], textures);
         }
 
-        mob_manager.update_mobs(set.tile_grid, &col_detector);
-        //add the code topass the colliders here as well as code to ensure that the hurtbox collider positions are set and updated.
-
+        mob_manager.update_mobs(set.tile_grid, &col_detector,&box_manager);
+        //add the code to pass the colliders here as well as code to ensure that the hurtbox collider positions are set and updated.
+        
+        box_manager.update(col_detector.entity_grid,world_timer);
         col_manager.resolve_collisions(col_detector.potential_collisions);
         col_detector.potential_collisions.clear();
 
@@ -464,6 +473,9 @@ void world_manager::manage(map<string, map<int, Texture2D>> textures)
         set.drawmap();
         mob_manager.draw_mobs();
 
+
+
+         progress_time();
         break;
     case paused:
         break;

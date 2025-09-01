@@ -4,7 +4,8 @@
         "type":"melee",
         "distance":{"x":0,"y":0},
          "AOE":{"width":10,"height":20},
-        "damage":10
+        "damage":10,
+        "lifetime":5
     }
     
 
