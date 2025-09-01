@@ -347,19 +347,82 @@ void collider_manager::update(map<int,map<int,vector<world_object*>>> hurt_grid,
    this->hurt_grid=hurt_grid;
    for(auto &obj:hitboxes)
    {
+    manage_hits(obj.get());
     obj->lifetime_timer++;
     if(obj->lifetime_timer>=obj->lifetime)
     {
         obj.reset();
     }
+      
    }
 }
 void collider_manager::spawn_collider(string attack,world_object* attacker)
 {
-    float attack_distance=attack_data["attack"]["distance"];
-    //
+    Vector2 attack_distance={attack_data[attack]["distance"]["x"],attack_data[attack]["distance"]["y"]};
+    
+    float positionX;
+    float positionY;
 
+    if((attacker->collider.x-attacker->prev_pos.x)>0)
+    {
+     positionX=attacker->collider.x+attack_distance.x;
+    }
+    else
+    {
+     positionX=attacker->collider.x-attack_distance.x;
+    }
+    if((attacker->collider.y-attacker->prev_pos.y)>0)
+    {
+     positionY=attacker->collider.y+attack_distance.y;
+    }
+    else
+    {
+     positionY=attacker->collider.y-attack_distance.y;
+    }
+    if(!positionX&&!positionY)
+    {
+     cout<<"reference error";
+     return;
+    }
+    Rectangle col={
+        positionX,positionY,
+        attack_data[attack]["width"],attack_data["height"]
+    };
 
+    auto temp=make_unique<hitbox>();
+    temp->collider=col;
+    temp->owner=attacker;
+    temp->active=true;
+    temp->name=attack;
+    hitboxes.push_back(move(temp));
+}
+void collider_manager::manage_hits(hitbox* obj)
+{
+    Vector2 indexes[]=
+    {
+            {0, 0},
+            {0, 1},
+            {1, 1},
+            {1, 0},
+            {1, -1},
+            {0, -1},
+            {-1, -1},
+            {-1, 0}
+    };
+    for(int i=0;i<8;i++)
+    {
+        vector<world_object*> wrldobj=hurt_grid[indexes[i].x][indexes[i].y];
+        for(auto &hurt:wrldobj)
+        {
+        mob* newMob=dynamic_cast<mob*>(hurt);
+        if(CheckCollisionRecs(newMob->damage_collider.collider,obj->collider))
+        {
+            newMob->damage_collider.take_damage(attack_data[obj->name]["damage"]);
+        }
+    }
+
+    }
+   
 }
 
 void world_manager::manage(map<string, map<int, Texture2D>> textures)
@@ -392,6 +455,7 @@ void world_manager::manage(map<string, map<int, Texture2D>> textures)
         }
 
         mob_manager.update_mobs(set.tile_grid, &col_detector);
+        //add the code topass the colliders here as well as code to ensure that the hurtbox collider positions are set and updated.
 
         col_manager.resolve_collisions(col_detector.potential_collisions);
         col_detector.potential_collisions.clear();

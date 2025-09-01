@@ -2,8 +2,9 @@
     "bash":
     {
         "type":"melee",
-        "distance":0,
-         "AOE":{"width":10,"height":20}
+        "distance":{"x":0,"y":0},
+         "AOE":{"width":10,"height":20},
+        "damage":10
     }
     
 

@@ -86,6 +86,7 @@ class hitbox:public obj_collider
 {
    
     public:
+    string name;
    float damage;
    float lifetime;
    float lifetime_timer;
@@ -251,11 +252,11 @@ class collider_manager
 { 
     nlohmann::json attack_data;
     vector<unique_ptr<hitbox>>hitboxes;
-    map<int,map<int,vector<hitbox>>> hit_grid;
+   
      map<int,map<int,vector<world_object*>>> hurt_grid;
     void prepare_self();
     void spawn_collider(string attack,world_object* attacker);
-    void manage_hits();
+    void manage_hits(hitbox* obj);
     void update(map<int,map<int,vector<world_object*>>> hurt_grid,float world_timer);
     void render_hitboxes();
 
