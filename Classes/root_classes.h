@@ -254,10 +254,9 @@ class collider_manager
     public:
     nlohmann::json attack_data;
     vector<unique_ptr<hitbox>>hitboxes;
-     map<int,map<int,vector<world_object*>>> hurt_grid;
     void prepare_self();
     void spawn_collider(string attack,world_object* attacker);
-    void manage_hits(hitbox* obj);
+    void manage_hits(map<int,map<int,vector<world_object*>>> hurt_grid,hitbox* obj);
     void update(map<int,map<int,vector<world_object*>>> hurt_grid,float world_timer);
     void render_hitboxes();
 

@@ -10,7 +10,7 @@
     "damage_collider_offset":2.5,
     "observation":6,
     "health": 100, 
-    "typeId":0,
+    "typeId":"0",
      "attacks":
      ["bash"]  
  },
@@ -21,7 +21,7 @@
     "speed":1.0,
     "health": 200 ,
      "observation":6,
-     "typeId":1
+     "typeId":"1"
 
  },
  "spawner_preset":
