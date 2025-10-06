@@ -100,6 +100,7 @@ class hurtbox:public obj_collider
     public:
    float durability;
    void take_damage(float damage_value);
+   void drawself();
 
 };
 
@@ -113,7 +114,7 @@ public:
     Vector2 destination;
     string typeId;
     hurtbox damage_collider;
-    vector<hurtbox> attacks;
+    vector<hitbox> attacks;
     float collider_offset;
 
     enum states
@@ -139,13 +140,13 @@ public:
         int max_wander_box,
         int max_idle_time,
         float speed);
-    void act(unordered_map<pair<int, int>, bool, pair_hash> grid);
+    void act(unordered_map<pair<int, int>, bool, pair_hash> grid,map<int,map<int,vector<world_object*>>> entity_grid);
 
     void drawself();
 
-    Vector2 move(Vector2 destination);
+    Vector2 move(Vector2 destination,map<int,map<int,vector<world_object*>>> entity_grid);
 
-    void move_state_machine(unordered_map<pair<int, int>, bool, pair_hash> grid);
+    void move_state_machine(unordered_map<pair<int, int>, bool, pair_hash> grid,map<int,map<int,vector<world_object*>>> entity_grid);
    
 };
 
@@ -286,6 +287,20 @@ public:
     void despawn(std::unique_ptr<mob>& deadMob,int index);
 
     void draw_mobs();
+};
+class entity_tracker
+{
+    private:
+     entity_tracker();
+     static entity_tracker* instance;
+     entity_tracker(const entity_tracker&)=delete;
+     entity_tracker& operator=(const entity_tracker&)=delete;
+    public:
+      map<int,map<int,bool>> grid_val; 
+      void update_grid(map<int,map<int,vector<world_object*>>> hurt_grid);
+      static entity_tracker* get_instance();
+     
+
 };
 class world_manager
 {

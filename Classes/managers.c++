@@ -41,8 +41,9 @@ spawner spawn_manager::prepare_spawner(spawner spawners)
 }
 void spawn_manager::despawn(std::unique_ptr<mob> &deadMob, int index)
 {
-    mobs.erase(mobs.begin() + index);
     dead_pool[deadMob->typeId].push_back(move(deadMob));
+    mobs.erase(mobs.begin() + index);
+    
 }
 spawner spawn_manager::update(spawner spawners, map<string, map<int, Texture2D>> textures)
 {
@@ -54,17 +55,17 @@ spawner spawn_manager::update(spawner spawners, map<string, map<int, Texture2D>>
     spawners.spawn_timer += 1;
     if (spawners.spawn_timer > spawners.spawn_interval)
     {
-        
+
         if (!dead_pool[spawners.mob_data["basic"]["typeId"]].empty())
         {
-             auto temp = move(dead_pool[spawners.mob_data["basic"]["typeId"]].back());
+            auto temp = move(dead_pool[spawners.mob_data["basic"]["typeId"]].back());
             dead_pool[spawners.mob_data["basic"]["typeId"]].pop_back();
             mobs.push_back(std::move(temp));
             spawners.spawn_timer = 0;
-              spawners.mob_count++;
-            return spawners; 
+            spawners.mob_count++;
+            return spawners;
         }
-         auto temp = make_unique<mob>();
+        auto temp = make_unique<mob>();
 
         Rectangle rec = {
             spawners.spawn_area.x,
@@ -78,10 +79,11 @@ spawner spawn_manager::update(spawner spawners, map<string, map<int, Texture2D>>
             rec, textures["slime"][spawners.mob_data["basic"]["texture"]],
             rec, spawners.mob_data["basic"]["observation"],
             (base_idle - (idle_modifier * speed)), speed);
-        temp->typeId = spawners.mob_data["basic"]["typeId"],
-        temp->collider_offset=spawners.mob_data["basic"]["damage_collider_offset"],
-        temp->damage_collider.collider.height-= temp->collider_offset;
-        temp->damage_collider.collider.width-= temp->collider_offset;
+        temp->typeId = spawners.mob_data["basic"]["typeId"];
+        temp->collider_offset = spawners.mob_data["basic"]["damage_collider_offset"];
+        temp->damage_collider.durability = spawners.mob_data["basic"]["health"];
+        temp->damage_collider.collider.height=temp->collider.height;
+        temp->damage_collider.collider.width= temp->collider.width;
         mobs.push_back(std::move(temp));
 
         spawners.spawn_timer = 0;
@@ -90,34 +92,41 @@ spawner spawn_manager::update(spawner spawners, map<string, map<int, Texture2D>>
 
     return spawners;
 }
-void spawn_manager::update_mobs(unordered_map<pair<int, int>, bool, pair_hash> grid, collision_detector *detect,collider_manager* box_manager)
+void spawn_manager::update_mobs(unordered_map<pair<int, int>, bool, pair_hash> grid, collision_detector *detect, collider_manager *box_manager)
 {
     // where all the actualization of the individual mob logic occurs
     for (int i = 0; i < mobs.size(); i++)
     {
-        mobs[i]->act(grid);
-        if(mobs[i]->current_state==mobs[i]->attack)
+        mobs[i]->act(grid,detect->entity_grid);
+        if (mobs[i]->current_state == mobs[i]->attack)
         {
-            box_manager->spawn_collider("bash",mobs[i].get());
-            mobs[i]->current_state=mobs[i]->wander;
+            box_manager->spawn_collider("bash", mobs[i].get());
+            mobs[i]->current_state = mobs[i]->wander;
         }
-        
+
         detect->update(mobs[i].get());
+        if(mobs[i]->damage_collider.durability<=0)
+        {
+            despawn(mobs[i],i);
+        }
     }
-    
+
     for (int i = 0; i < mobs.size(); i++)
     {
 
         detect->check_adjacent(mobs[i].get());
     }
-    
 }
 void spawn_manager::draw_mobs()
 {
     for (int i = 0; i < mobs.size(); i++)
     {
-
+        mobs[i]->damage_collider.drawself();
         DrawTexture(mobs[i]->texture, mobs[i]->collider.x, mobs[i]->collider.y, RAYWHITE);
+        //printf("collider values %f ,%f,%f,%f \n",mobs[i]->damage_collider.collider.x, mobs[i]->damage_collider.collider.y, mobs[i]->damage_collider.collider.width, mobs[i]->damage_collider.collider.height);
+        DrawRectangleLines( mobs[i]->damage_collider.collider.x, mobs[i]->damage_collider.collider.y, mobs[i]->damage_collider.collider.width, mobs[i]->damage_collider.collider.height,BLACK);
+
+        
     }
 }
 // camera manager implementation
@@ -319,7 +328,6 @@ void ::collision_manager::resolve_collisions(vector<pair<world_object *, world_o
                 dyn_obj_first->collider.x += (-displacement * x);
                 dyn_obj_first->collider.y += (-displacement * y);
 
-            
                 mob *derived_ptr = static_cast<mob *>(dyn_obj_first);
                 derived_ptr->current_state = derived_ptr->idle;
 
@@ -354,128 +362,107 @@ void collider_manager::prepare_self()
          << attack_data;
 }
 
-void collider_manager::update(map<int,map<int,vector<world_object*>>> hurt_grid,float world_timer)
+void collider_manager::update(map<int, map<int, vector<world_object *>>> hurt_grid, float world_timer)
 {
-   
-   for(int i=0;i<hitboxes.size();i++)
-   {
-    manage_hits(hurt_grid,hitboxes[i].get());
-    cout<<"hits managed \n";
-    hitboxes[i]->lifetime_timer+=world_timer;
-    if(hitboxes[i]->lifetime_timer>=hitboxes[i]->lifetime)
-    {  
-        
-        hitboxes.erase(hitboxes.begin()+i);
-        
-        
+
+    for (int i = 0; i < hitboxes.size(); i++)
+    {
+        manage_hits(hurt_grid, hitboxes[i].get());
+
+        hitboxes[i]->lifetime_timer += world_timer;
+        if (hitboxes[i]->lifetime_timer >= hitboxes[i]->lifetime)
+        {
+            hitboxes.erase(hitboxes.begin() + i);
+        }
     }
-
-      
-   }
-
-   cout<<"update complete \n";
 }
 void collider_manager::render_hitboxes()
 {
-    for(auto &obj:hitboxes)
+    for (auto &obj : hitboxes)
     {
-        DrawRectangleRec(obj->collider,GREEN);
+        DrawRectangleRec(obj->collider, GREEN);
     }
 }
-void collider_manager::spawn_collider(string attack,world_object* attacker)
+void collider_manager::spawn_collider(string attack, world_object *attacker)
 {
-    
-    Vector2 attack_distance={attack_data[attack]["distance"]["x"],attack_data[attack]["distance"]["y"]};
-    cout<<"break 1"<<"\n";
+
+    Vector2 attack_distance = {attack_data[attack]["distance"]["x"], attack_data[attack]["distance"]["y"]};
+
     float positionX;
     float positionY;
 
-    if((attacker->collider.x-attacker->prev_pos.x)>0)
+    if ((attacker->collider.x - attacker->prev_pos.x) > 0)
     {
-     positionX=attacker->collider.x+attack_distance.x;
+        positionX = attacker->collider.x + attack_distance.x;
     }
     else
     {
-     positionX=attacker->collider.x-attack_distance.x;
+        positionX = attacker->collider.x - attack_distance.x;
     }
-    if((attacker->collider.y-attacker->prev_pos.y)>0)
+    if ((attacker->collider.y - attacker->prev_pos.y) > 0)
     {
-     positionY=attacker->collider.y+attack_distance.y;
+        positionY = attacker->collider.y + attack_distance.y;
     }
     else
     {
-     positionY=attacker->collider.y-attack_distance.y;
+        positionY = attacker->collider.y - attack_distance.y;
     }
-    if(!positionX&&!positionY)
+    if (!positionX && !positionY)
     {
-     cout<<"reference error";
-     return;
+        cout << "reference error";
+        return;
     }
-    
-    Rectangle col={
-        positionX,positionY,
-        attack_data[attack]["AOE"]["width"],attack_data[attack]["AOE"]["height"]
-    };
-    
 
-    auto temp=make_unique<hitbox>();
-    temp->collider=col;
-    temp->owner=attacker;
-    temp->active=true;
-    temp->name=attack;
-    
-    temp->lifetime= attack_data[attack]["lifetime"];
-    temp->lifetime_timer=0;
+    Rectangle col = {
+        positionX, positionY,
+        attack_data[attack]["AOE"]["width"], attack_data[attack]["AOE"]["height"]};
+
+    auto temp = make_unique<hitbox>();
+    temp->collider = col;
+    temp->owner = attacker;
+    temp->active = true;
+    temp->name = attack;
+
+    temp->lifetime = attack_data[attack]["lifetime"];
+    temp->lifetime_timer = 0;
     hitboxes.push_back(move(temp));
-    cout<<"collider spawned";
-
 }
-void collider_manager::manage_hits(map<int,map<int,vector<world_object*>>> hurt_grid,hitbox* obj)
+void collider_manager::manage_hits(map<int, map<int, vector<world_object *>>> hurt_grid, hitbox *obj)
 {
-    Vector2 indexes[]=
-    {
-            {0, 0},
-            {0, 1},
-            {1, 1},
-            {1, 0},
-            {1, -1},
-            {0, -1},
-            {-1, -1},
-            {-1, 0}
-    };
-    for(int i=0;i<8;i++)
-    {
-           
-        int x=(obj->collider.x/t_size)+indexes[i].x;
-        int y=(obj->collider.y/t_size)+indexes[i].y;
 
-      
-        vector<world_object*> wrldobj=hurt_grid[x][y];
-        
-        if(wrldobj.size()>0)
-        {
-            
-              for(auto &hurt:wrldobj)
+    int x = (obj->collider.x / t_size);
+    int y = (obj->collider.y / t_size);
+    int x_limit = ((obj->collider.x + obj->collider.width) / t_size);
+    int y_limit = ((obj->collider.x + obj->collider.height) / t_size);
 
+    for (int i = x; i < (x_limit * y_limit); i++)
+    {
+        for(int j=y;j<y_limit;j++)
         {
-          
-        mob* newMob=dynamic_cast<mob*>(hurt);
-        
-        if(CheckCollisionRecs(newMob->damage_collider.collider,obj->collider))
+        vector<world_object *> wrldobj = hurt_grid[i][j];
+
+        if (!wrldobj.empty())
         {
-           
-            newMob->damage_collider.take_damage(attack_data[obj->name]["damage"]);
+
+            for (auto &hurt : wrldobj)
+
+            {
+
+                mob *newMob = dynamic_cast<mob *>(hurt);
+
+                if (newMob!=dynamic_cast<mob*>(obj->owner)&&CheckCollisionRecs(newMob->damage_collider.collider, obj->collider) )
+                {
+                    newMob->damage_collider.take_damage(attack_data[obj->name]["damage"]);
+                   
+                }
+            }
         }
- }
     }
-
     }
-   
-   
 }
 void world_manager::progress_time()
 {
-    world_timer+=0.1;
+    world_timer += 0.1;
 }
 void world_manager::manage(map<string, map<int, Texture2D>> textures)
 {
@@ -490,9 +477,9 @@ void world_manager::manage(map<string, map<int, Texture2D>> textures)
         {
             set.spawners[i] = mob_manager.prepare_spawner(set.spawners[i]);
         }
-         box_manager.prepare_self();
+        box_manager.prepare_self();
         current_State = world_State::playing;
-         //mob_manager.mobs.reserve(1000);
+        // mob_manager.mobs.reserve(1000);
         cout << "finished loading";
     }
     break;
@@ -503,25 +490,22 @@ void world_manager::manage(map<string, map<int, Texture2D>> textures)
         for (int i = 0; i < set.spawners.size(); i++)
         {
 
-           set.spawners[i] = mob_manager.update(set.spawners[i], textures);
+            set.spawners[i] = mob_manager.update(set.spawners[i], textures);
         }
 
-        mob_manager.update_mobs(set.tile_grid, &col_detector,&box_manager);
-        //add the code to pass the colliders here as well as code to ensure that the hurtbox collider positions are set and updated.
-        
-        box_manager.update(col_detector.entity_grid,world_timer);
+        mob_manager.update_mobs(set.tile_grid, &col_detector, &box_manager);
+        // add the code to pass the colliders here as well as code to ensure that the hurtbox collider positions are set and updated.
+
+        box_manager.update(col_detector.entity_grid, world_timer);
         col_manager.resolve_collisions(col_detector.potential_collisions);
         col_detector.potential_collisions.clear();
 
         cam.move_cam();
         set.drawmap();
         mob_manager.draw_mobs();
-         box_manager.render_hitboxes();
+        box_manager.render_hitboxes();
 
-
-
-
-         progress_time();
+        progress_time();
         break;
     case paused:
         break;
