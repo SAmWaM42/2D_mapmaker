@@ -1,0 +1,4 @@
+:Make  world auto genearated have the run function take 2 args for world size.
+:Tiles cannot be auto added 
+:make additions only to be game objects 
+:make it so that game objexts maintain behaviour when added to scene(not just location placeholders) 

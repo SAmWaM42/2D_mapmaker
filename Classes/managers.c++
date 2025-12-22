@@ -1,4 +1,14 @@
 #include "root_classes.h"
+#include "../json.hpp"
+#include <iostream>
+#include <map>
+using namespace std;
+#define RENDER_SCALE 2.0
+using json = nlohmann::json;
+
+int grid_tiles = 100;
+int text_length = 16;
+int tile_size = 40;
 
 // spawn manager implementation
 spawn_manager::spawn_manager()
@@ -43,7 +53,6 @@ void spawn_manager::despawn(std::unique_ptr<mob> &deadMob, int index)
 {
     dead_pool[deadMob->typeId].push_back(move(deadMob));
     mobs.erase(mobs.begin() + index);
-    
 }
 spawner spawn_manager::update(spawner spawners, map<string, map<int, Texture2D>> textures)
 {
@@ -82,8 +91,8 @@ spawner spawn_manager::update(spawner spawners, map<string, map<int, Texture2D>>
         temp->typeId = spawners.mob_data["basic"]["typeId"];
         temp->collider_offset = spawners.mob_data["basic"]["damage_collider_offset"];
         temp->damage_collider.durability = spawners.mob_data["basic"]["health"];
-        temp->damage_collider.collider.height=temp->collider.height;
-        temp->damage_collider.collider.width= temp->collider.width;
+        temp->damage_collider.collider.height = temp->collider.height;
+        temp->damage_collider.collider.width = temp->collider.width;
         mobs.push_back(std::move(temp));
 
         spawners.spawn_timer = 0;
@@ -97,7 +106,7 @@ void spawn_manager::update_mobs(unordered_map<pair<int, int>, bool, pair_hash> g
     // where all the actualization of the individual mob logic occurs
     for (int i = 0; i < mobs.size(); i++)
     {
-        mobs[i]->act(grid,detect->entity_grid);
+        mobs[i]->act(grid);
         if (mobs[i]->current_state == mobs[i]->attack)
         {
             box_manager->spawn_collider("bash", mobs[i].get());
@@ -105,9 +114,9 @@ void spawn_manager::update_mobs(unordered_map<pair<int, int>, bool, pair_hash> g
         }
 
         detect->update(mobs[i].get());
-        if(mobs[i]->damage_collider.durability<=0)
+        if (mobs[i]->damage_collider.durability <= 0)
         {
-            despawn(mobs[i],i);
+            despawn(mobs[i], i);
         }
     }
 
@@ -123,10 +132,8 @@ void spawn_manager::draw_mobs()
     {
         mobs[i]->damage_collider.drawself();
         DrawTexture(mobs[i]->texture, mobs[i]->collider.x, mobs[i]->collider.y, RAYWHITE);
-        //printf("collider values %f ,%f,%f,%f \n",mobs[i]->damage_collider.collider.x, mobs[i]->damage_collider.collider.y, mobs[i]->damage_collider.collider.width, mobs[i]->damage_collider.collider.height);
-        DrawRectangleLines( mobs[i]->damage_collider.collider.x, mobs[i]->damage_collider.collider.y, mobs[i]->damage_collider.collider.width, mobs[i]->damage_collider.collider.height,BLACK);
-
-        
+        // printf("collider values %f ,%f,%f,%f \n",mobs[i]->damage_collider.collider.x, mobs[i]->damage_collider.collider.y, mobs[i]->damage_collider.collider.width, mobs[i]->damage_collider.collider.height);
+        DrawRectangleLines(mobs[i]->damage_collider.collider.x, mobs[i]->damage_collider.collider.y, mobs[i]->damage_collider.collider.width, mobs[i]->damage_collider.collider.height, BLACK);
     }
 }
 // camera manager implementation
@@ -320,25 +327,24 @@ void ::collision_manager::resolve_collisions(vector<pair<world_object *, world_o
 
             if (dyn_obj_first && dyn_obj_sec)
             {
+                // mob *derived_ptr = static_cast<mob *>(dyn_obj_first);
+                // mob *derived_ptr_sec = static_cast<mob *>(dyn_obj_sec);
+                //  derived_ptr->current_state = derived_ptr->idle;
+                //  derived_ptr_sec->current_state = derived_ptr_sec->idle;
 
                 // decide whether i should generate a force or just move the objects
                 float x = dyn_obj_first->force.x;
                 float y = dyn_obj_first->force.y;
-                int displacement = 20;
-                dyn_obj_first->collider.x += (-displacement * x);
-                dyn_obj_first->collider.y += (-displacement * y);
-
-                mob *derived_ptr = static_cast<mob *>(dyn_obj_first);
-                derived_ptr->current_state = derived_ptr->idle;
-
                 float x_sec = dyn_obj_sec->force.x;
                 float y_sec = dyn_obj_sec->force.y;
+                int base_displacement = 40;
+                float applied_x = (40 * abs(x - x_sec) / abs(x + x_sec));
+                float applied_y = (40 * abs(y - y_sec) / abs(y + y_sec));
 
-                dyn_obj_sec->collider.x += (-displacement * x_sec);
-                dyn_obj_sec->collider.y += (-displacement * y_sec);
-
-                mob *derived_ptr_sec = static_cast<mob *>(dyn_obj_sec);
-                derived_ptr_sec->current_state = derived_ptr_sec->idle;
+                dyn_obj_first->collider.y += (applied_x * x);
+                dyn_obj_first->collider.x += (applied_y * y);
+                dyn_obj_sec->collider.y += (applied_x * x_sec);
+                dyn_obj_sec->collider.x += (applied_y * y_sec);
             }
             else
             {
@@ -437,27 +443,26 @@ void collider_manager::manage_hits(map<int, map<int, vector<world_object *>>> hu
 
     for (int i = x; i < (x_limit * y_limit); i++)
     {
-        for(int j=y;j<y_limit;j++)
+        for (int j = y; j < y_limit; j++)
         {
-        vector<world_object *> wrldobj = hurt_grid[i][j];
+            vector<world_object *> wrldobj = hurt_grid[i][j];
 
-        if (!wrldobj.empty())
-        {
-
-            for (auto &hurt : wrldobj)
-
+            if (!wrldobj.empty())
             {
 
-                mob *newMob = dynamic_cast<mob *>(hurt);
+                for (auto &hurt : wrldobj)
 
-                if (newMob!=dynamic_cast<mob*>(obj->owner)&&CheckCollisionRecs(newMob->damage_collider.collider, obj->collider) )
                 {
-                    newMob->damage_collider.take_damage(attack_data[obj->name]["damage"]);
-                   
+
+                    mob *newMob = dynamic_cast<mob *>(hurt);
+
+                    if (newMob != dynamic_cast<mob *>(obj->owner) && CheckCollisionRecs(newMob->damage_collider.collider, obj->collider))
+                    {
+                        newMob->damage_collider.take_damage(attack_data[obj->name]["damage"]);
+                    }
                 }
             }
         }
-    }
     }
 }
 void world_manager::progress_time()
@@ -510,4 +515,207 @@ void world_manager::manage(map<string, map<int, Texture2D>> textures)
     case paused:
         break;
     }
+}
+void world_manager::editor(map<string, map<int, Texture2D>> textures)
+{
+
+    
+    bool loaded = false;
+    int zoom = 1;
+    int rotation = 0;
+    int x = grid_tiles;
+    int y = grid_tiles;
+    Vector2 offset = {screenwidth / 2, screenheight / 2};
+    Vector2 target = {screenwidth / 2, screenheight / 2};
+    Vector2 grid[x][y];
+    Rectangle menuList={cam.camera.target.x-(screenwidth / 4),cam.camera.target.y-(screenheight / 4),(screenwidth / 4),(screenwidth / 4)};
+    string  entities[]={"slime"};
+    string  spawners[]={"slime_spawner"};
+    string  tiles[]={"grass"};
+    Rectangle entitiesButton={menuList.x,menuList.y,70,50};
+    Rectangle spawnersButton={menuList.x+entitiesButton.width,menuList.y,70,50};
+    Rectangle tilesButton={menuList.x+spawnersButton.width,menuList.y,70,50};
+    //create funnction to draw the textures in the menu with a rectangle to allow for collision checking
+    
+
+    for (int i = 0; i < grid_tiles; i++)
+    {
+        for (int j = 0; j < grid_tiles; j++)
+        {
+            grid[i][j].x = j * 40;
+            grid[i][j].y = i * 40;
+        }
+    }
+
+    string tile_name[textures.size()];
+    cout << textures.size();
+    tile_name[0] = "grass";
+    tile_name[1] = "slime_spawner";
+    tile_name[2] = "slime";
+
+    Texture2D current_tile_img;
+    int current_image = 0;
+    int current_tile = 0;
+    int variant = 0;
+    bool tile_shift = false;
+    bool mode_shift = false;
+    bool grid_on = false;
+    int time;
+
+    tile temp_tile;
+
+   
+        current_tile_img = textures[tile_name[current_image]][variant];
+        temp_tile.variant = variant;
+        temp_tile.texture = current_tile_img;
+        temp_tile.type = tile_name[current_image];
+
+        if ((cam.camera.target.x - cam.camera.offset.x) < 0)
+        {
+            cam.camera.target.x += 1;
+        }
+        if ((cam.camera.target.y - cam.camera.offset.y) < 0)
+        {
+            cam.camera.target.y += 1;
+        }
+        cam.move_cam();
+
+        // fix camera movement and improve block positioning ans assignment
+
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !mode_shift)
+        {
+            // grid placement
+
+            temp_tile.position.width = current_tile_img.width;
+            temp_tile.position.height = current_tile_img.height;
+            temp_tile.used = true;
+            temp_tile.ongrid = "true";
+            int x = (int)(GetScreenToWorld2D(GetMousePosition(), cam.camera).x / 40);
+            int y = (int)(GetScreenToWorld2D(GetMousePosition(), cam.camera).y / 40);
+
+            temp_tile.position.x = grid[x][y].y;
+            temp_tile.position.y = grid[x][y].x + 40 - temp_tile.position.height;
+            bool layered = false;
+            bool same_tile = false;
+            if (current_tile > 0)
+            {
+                for (int i = 0; i < set.tiles.size(); i++)
+                {
+                    for (int j = 0; j < set.tiles.size(); j++)
+                    {
+                        if (set.tiles[i].used && set.tiles[i].ongrid == "true" && set.tiles[j].ongrid == "true")
+                        {
+
+                            if (i != j)
+                            {
+                                layered = CheckCollisionRecs(set.tiles[i].position, set.tiles[j].position);
+
+                                if (layered)
+                                {
+
+                                    set.tiles.erase(set.tiles.begin() + j);
+                                    same_tile = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (!same_tile)
+            {
+                set.tiles.push_back(temp_tile);
+                current_tile++;
+            }
+            else
+            {
+                same_tile = false;
+            }
+        }
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && mode_shift)
+        {
+            // offgrid placement
+            temp_tile.position.width = current_tile_img.width;
+            temp_tile.position.height = current_tile_img.height;
+            temp_tile.used = true;
+            temp_tile.ongrid = "false";
+            int x = (int)(GetScreenToWorld2D(GetMousePosition(), cam.camera).x / 40);
+            int y = (int)(GetScreenToWorld2D(GetMousePosition(), cam.camera).y / 40);
+
+            temp_tile.position.x = grid[x][y].y;
+            temp_tile.position.y = grid[x][y].x + 40 - temp_tile.position.height;
+            set.tiles.push_back(temp_tile);
+            current_tile++;
+            cout << current_tile;
+        }
+
+        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
+        {
+            for (int i = 0; i < set.tiles.size(); i++)
+            {
+                if (set.tiles[i].used)
+                {
+
+                    if (CheckCollisionPointRec(GetScreenToWorld2D(GetMousePosition(), cam.camera), set.tiles[i].position))
+                    {
+
+                        set.tiles.erase((set.tiles.begin() + i));
+                        current_tile--;
+                        break;
+                    }
+                }
+            }
+        }
+        if (IsKeyPressed(KEY_RIGHT_SHIFT))
+        {
+            tile_shift = !tile_shift;
+        }
+        if (IsKeyPressed(KEY_LEFT_SHIFT))
+        {
+            mode_shift = !mode_shift;
+        }
+
+        if (IsKeyPressed(KEY_N) && tile_shift)
+        {
+            // changing tile type
+            cout << current_image << "\n";
+            cout << textures.size();
+
+            current_image = ((current_image + 1) % (textures.size()));
+        }
+        if (IsKeyPressed(KEY_N) && !tile_shift)
+        {
+            // changing the variant of that specific tile type
+            variant = ((variant + 1) % textures[tile_name[current_image]].size());
+            if (variant >= textures[tile_name[current_image]].size())
+            {
+                variant = 0;
+            }
+        }
+       
+        if (IsKeyPressed(KEY_G))
+        {
+            // the grid to assist in tile placement
+            grid_on = !grid_on;
+        }
+        if (IsKeyPressed(KEY_X))
+        {
+            // primitive tile sorting on placement
+            set.autosort(textures, set.tiles.size());
+        }
+        if (IsKeyPressed(KEY_R))
+        {
+            cout << "enter file to be removed";
+            string filename;
+            cin >> filename;
+            string name = "../assets/maps/" + filename;
+            cout << name;
+            if (remove(name.c_str()) != 0)
+            {
+                cout << "file not deleted";
+            }
+        }
+        
+
+        
+
 }

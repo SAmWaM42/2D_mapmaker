@@ -32,16 +32,16 @@
         current_state = states::wander;
         current = wander_states::target;
     }
-    void mob:: act(unordered_map<pair<int, int>, bool, pair_hash> grid,map<int,map<int,vector<world_object*>>> entity_grid)
+    void mob:: act(unordered_map<pair<int, int>, bool, pair_hash> grid)
     {
-        move_state_machine(grid,entity_grid);
+        move_state_machine(grid);
         damage_collider.collider.x=collider.x+collider_offset;
         damage_collider.collider.y=collider.y+collider_offset;
     }
     void mob:: drawself()
     {
     }
-    Vector2 mob:: move(Vector2 destination, map<int,map<int,vector<world_object*>>> entity_grid)
+    Vector2 mob:: move(Vector2 destination)
     {
         Vector2 directions[] = 
             {{0, 1},
@@ -71,19 +71,11 @@
                 best_direction_index = i;
             }
         }
-        auto obstacle=entity_grid[ collider.x+directions[best_direction_index].x][collider.y+directions[best_direction_index].y];
-        
-           if(obstacle.size()>0)
-          {
-            Vector2 wait={0,0};
-            printf("Waiting for entity to pass at (%f,%f)\n",collider.x,collider.y);
-            return wait;
-          } 
-         
+      
          
         return directions[best_direction_index];
     }
-    void mob::move_state_machine(unordered_map<pair<int, int>, bool, pair_hash> grid,map<int,map<int,vector<world_object*>>> entity_grid)
+    void mob::move_state_machine(unordered_map<pair<int, int>, bool, pair_hash> grid)
     {
         switch (current_state)
         {
@@ -109,7 +101,7 @@
             break;
             case relocate:
             {
-                force = move(destination,entity_grid);
+                force = move(destination);
                 prev_pos={collider.x,collider.y};
                 collider.x += force.x;
                 collider.y += force.y;
@@ -123,7 +115,7 @@
                 break;
             case change:
                 current = wander_states::target;
-                current_state = states::attack;
+    
 
                 break;
             }
@@ -165,17 +157,4 @@ void hurtbox::drawself()
 
     DrawRectangle(collider.x,collider.y-10,(durability)/8,5,GREEN);
 }
-entity_tracker* entity_tracker ::get_instance()
-{
- if(instance==nullptr)
- {
-    instance=new entity_tracker();
- }
- return instance;
-}
-//add code to  map entities on a grid for faster look up also set a chunck size to reduce the iteration size
-void entity_tracker::update_grid(map<int,map<int,vector<world_object*>>> hurt_grid)
-{
-    
 
-}

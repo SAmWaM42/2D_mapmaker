@@ -140,13 +140,13 @@ public:
         int max_wander_box,
         int max_idle_time,
         float speed);
-    void act(unordered_map<pair<int, int>, bool, pair_hash> grid,map<int,map<int,vector<world_object*>>> entity_grid);
+    void act(unordered_map<pair<int, int>, bool, pair_hash> grid);
 
     void drawself();
 
-    Vector2 move(Vector2 destination,map<int,map<int,vector<world_object*>>> entity_grid);
+    Vector2 move(Vector2 destination);
 
-    void move_state_machine(unordered_map<pair<int, int>, bool, pair_hash> grid,map<int,map<int,vector<world_object*>>> entity_grid);
+    void move_state_machine(unordered_map<pair<int, int>, bool, pair_hash> grid);
    
 };
 
@@ -288,20 +288,6 @@ public:
 
     void draw_mobs();
 };
-class entity_tracker
-{
-    private:
-     entity_tracker();
-     static entity_tracker* instance;
-     entity_tracker(const entity_tracker&)=delete;
-     entity_tracker& operator=(const entity_tracker&)=delete;
-    public:
-      map<int,map<int,bool>> grid_val; 
-      void update_grid(map<int,map<int,vector<world_object*>>> hurt_grid);
-      static entity_tracker* get_instance();
-     
-
-};
 class world_manager
 {
 public:
@@ -335,6 +321,7 @@ public:
             textures);
     
     void progress_time();
+    void editor(map<string, map<int, Texture2D>> textures);
 };
 class world_renderer
 {

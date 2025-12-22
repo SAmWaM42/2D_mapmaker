@@ -2,7 +2,7 @@
 #define mapmaker
 #include "../raylib.h"
 
-#include "../root_classes.c++"
+#include "../Classes/root_classes.h"
 #include "../json.hpp"
 #include <iostream>
 #include <map>
