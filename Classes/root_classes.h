@@ -9,7 +9,7 @@
 #include <iostream>
 #include <map>
 #include <list>
-#include "json.hpp"
+#include "../json.hpp"
 using namespace std;
 #define screenheight 720
 #define screenwidth 960
@@ -55,7 +55,7 @@ public:
     Vector2 prev_pos;
     Texture2D texture;
     Rectangle collider;
-    
+    string Id;
    
    
    
